@@ -1,0 +1,240 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Modern Clean Palette */
+  --burgundy: #059669;
+  --burgundy-dark: #047857;
+  --burgundy-light: #10B981;
+  --walnut: #475569;
+  --walnut-dark: #1E293B;
+  --walnut-light: #64748B;
+  --gold: #CA8A04;
+  --gold-light: #EAB308;
+  --gold-muted: #A16207;
+  --cream: #F8FAFC;
+  --cream-dark: #F1F5F9;
+  --ivory: #FFFFFF;
+  --charcoal: #0F172A;
+  --charcoal-light: #334155;
+  --parchment: #F1F5F9;
+
+  --background: var(--cream);
+  --foreground: var(--charcoal);
+}
+
+.dark {
+  --background: #0F172A;
+  --foreground: var(--cream);
+  --cream: #0F172A;
+  --cream-dark: #1E293B;
+  --ivory: #1E293B;
+  --parchment: #1E293B;
+}
+
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+/* Elegant Headings */
+h1, h2, h3, .font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Clean Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream-dark);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--walnut-light) 0%, var(--walnut) 100%);
+  border-radius: 5px;
+  border: 2px solid var(--cream-dark);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--walnut) 0%, var(--walnut-dark) 100%);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1E293B;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #475569 0%, #334155 100%);
+  border-color: #1E293B;
+}
+
+/* Clean Card Styles */
+.card-premium {
+  background: #FFFFFF;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.04),
+    0 4px 6px rgba(15, 23, 42, 0.06);
+}
+
+.dark .card-premium {
+  background: #1E293B;
+  border-color: rgba(71, 85, 105, 0.4);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Gold Accent Border */
+.border-gold {
+  border-color: var(--gold);
+}
+
+.border-gold-subtle {
+  border-color: rgba(202, 138, 4, 0.3);
+}
+
+/* Clean Header Gradient (replaces leather texture) */
+.leather-texture {
+  background: linear-gradient(145deg, #1E293B 0%, #0F172A 100%);
+  position: relative;
+}
+
+.leather-texture::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Clean Slate Header (replaces wood grain) */
+.wood-grain {
+  background: linear-gradient(135deg, #334155 0%, #1E293B 50%, #334155 100%);
+  position: relative;
+}
+
+.wood-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Gold Shimmer Effect */
+.gold-shimmer {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  background-size: 200% 200%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Clean Input Styles */
+.input-premium {
+  background: #FFFFFF;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s ease;
+}
+
+.input-premium:focus {
+  border-color: #059669;
+  box-shadow:
+    inset 0 1px 2px rgba(15, 23, 42, 0.04),
+    0 0 0 3px rgba(5, 150, 105, 0.15);
+  outline: none;
+}
+
+.dark .input-premium {
+  background: #1E293B;
+  border-color: rgba(71, 85, 105, 0.5);
+}
+
+.dark .input-premium:focus {
+  border-color: #059669;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 0 3px rgba(5, 150, 105, 0.2);
+}
+
+/* Emerald Button */
+.btn-premium {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  border: 1px solid #047857;
+  box-shadow:
+    0 2px 4px rgba(5, 150, 105, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.btn-premium:hover {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  box-shadow:
+    0 4px 8px rgba(5, 150, 105, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-premium:active {
+  transform: translateY(0);
+  box-shadow:
+    0 1px 2px rgba(5, 150, 105, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Slate Divider (replaces brass) */
+.divider-brass {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #CBD5E1 20%, #CBD5E1 80%, transparent 100%);
+  opacity: 0.5;
+}
+
+/* Table Styles */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Focus Styles */
+input:focus, select:focus, button:focus {
+  outline: none;
+}
+
+/* Glass effect for modals */
+.glass-premium {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.dark .glass-premium {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
