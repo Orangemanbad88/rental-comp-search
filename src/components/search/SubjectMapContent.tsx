@@ -101,7 +101,6 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
   const centerLng = subject?.lng || -74.80;
 
   const mappableListings = listings.filter(l => l.lat !== 0 && l.lng !== 0);
-  console.log('[SubjectMap] listings:', listings.length, 'mappable:', mappableListings.length);
 
   async function handleMapClick(lat: number, lng: number) {
     setMarkerPos([lat, lng]);
@@ -227,7 +226,7 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
       )}
 
       <p className="text-[10px] text-walnut/40 dark:text-cream/30 mt-1.5 text-center">
-        Click map or a listing marker to set subject ({mappableListings.length} listings)
+        Click map or a listing marker to set subject
       </p>
     </div>
   );

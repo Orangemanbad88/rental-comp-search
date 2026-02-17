@@ -55,7 +55,6 @@ export default function MapContent({ subject, comps, selectedComps, onToggleSele
 
   // Filter out comps with no valid coordinates
   const mappableComps = comps.filter(c => c.lat !== 0 && c.lng !== 0);
-  console.log('[MapContent] comps:', comps.length, 'mappable:', mappableComps.length);
 
   return (
     <div className="h-80 rounded-xl overflow-hidden border border-walnut/10 dark:border-gold/10">
