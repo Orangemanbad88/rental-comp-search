@@ -60,6 +60,12 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
     subject?.lat && subject?.lng ? [subject.lat, subject.lng] : null
   );
   const [loading, setLoading] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+
+  function showConfirmation() {
+    setConfirmed(true);
+    setTimeout(() => setConfirmed(false), 1500);
+  }
 
   useEffect(() => {
     setMounted(true);
@@ -91,10 +97,11 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
 
   const { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMapEvents } = MapComps;
 
-  const centerLat = subject?.lat || 39.1534;
-  const centerLng = subject?.lng || -74.6929;
+  const centerLat = subject?.lat || 39.08;
+  const centerLng = subject?.lng || -74.80;
 
   const mappableListings = listings.filter(l => l.lat !== 0 && l.lng !== 0);
+  console.log('[SubjectMap] listings:', listings.length, 'mappable:', mappableListings.length);
 
   async function handleMapClick(lat: number, lng: number) {
     setMarkerPos([lat, lng]);
@@ -113,8 +120,10 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
         lat,
         lng,
       });
+      showConfirmation();
     } catch {
       onLocationSelect({ city: findNearestCity(lat, lng), lat, lng });
+      showConfirmation();
     } finally {
       setLoading(false);
     }
@@ -144,6 +153,7 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
       hasWasherDryer: listing.hasWasherDryer,
       utilitiesIncluded: listing.utilitiesIncluded,
     });
+    showConfirmation();
   }
 
   function ClickHandler() {
@@ -156,7 +166,7 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
   return (
     <div className="relative">
       <div className="h-52 rounded-lg overflow-hidden border border-walnut/10 dark:border-gold/10">
-        <MapContainer center={[centerLat, centerLng]} zoom={12} className="h-full w-full">
+        <MapContainer center={[centerLat, centerLng]} zoom={11} className="h-full w-full">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -210,8 +220,14 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
         </div>
       )}
 
+      {confirmed && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-lg animate-pulse">
+          Subject set
+        </div>
+      )}
+
       <p className="text-[10px] text-walnut/40 dark:text-cream/30 mt-1.5 text-center">
-        Click map or a listing marker to set subject
+        Click map or a listing marker to set subject ({mappableListings.length} listings)
       </p>
     </div>
   );

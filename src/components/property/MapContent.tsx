@@ -49,16 +49,17 @@ export default function MapContent({ subject, comps, selectedComps, onToggleSele
   }
 
   const { MapContainer, TileLayer, Marker, Popup, CircleMarker } = MapComponents;
-  const subjectLat = subject.lat || 39.1534;
-  const subjectLng = subject.lng || -74.6929;
+  const subjectLat = subject.lat || 39.08;
+  const subjectLng = subject.lng || -74.80;
   const selectedIds = new Set(selectedComps.map(c => c.id));
 
   // Filter out comps with no valid coordinates
   const mappableComps = comps.filter(c => c.lat !== 0 && c.lng !== 0);
+  console.log('[MapContent] comps:', comps.length, 'mappable:', mappableComps.length);
 
   return (
     <div className="h-80 rounded-xl overflow-hidden border border-walnut/10 dark:border-gold/10">
-      <MapContainer center={[subjectLat, subjectLng]} zoom={12} className="h-full w-full">
+      <MapContainer center={[subjectLat, subjectLng]} zoom={11} className="h-full w-full">
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {subjectLat !== 0 && subjectLng !== 0 && (
           <Marker position={[subjectLat, subjectLng]}>
