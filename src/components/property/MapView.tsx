@@ -13,7 +13,7 @@ interface MapViewProps {
 const MapContent = dynamic(() => import('./MapContent'), {
   ssr: false,
   loading: () => (
-    <div className="h-64 bg-cream-dark dark:bg-[#1E293B] rounded-xl flex items-center justify-center border border-walnut/10 dark:border-gold/10">
+    <div className="h-64 bg-cream-dark dark:bg-[#1a1a24] rounded-xl flex items-center justify-center border border-walnut/10 dark:border-gold/10">
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-walnut/20 dark:border-gold/20 border-t-burgundy dark:border-t-gold mb-2"></div>
         <p className="text-walnut dark:text-cream/60 text-sm">Loading map...</p>

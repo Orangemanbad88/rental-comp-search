@@ -189,13 +189,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Map View — full width at top */}
-        {subject && hasSearched && results.length > 0 && (
-          <MapView subject={subject} comps={results} selectedComps={selectedComps} onToggleSelect={handleToggleSelect} />
-        )}
-
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Sidebar - Subject Property Form (on top on mobile) */}
           <div className="order-1 lg:order-none lg:col-span-4 xl:col-span-3">
@@ -228,6 +223,16 @@ export default function Home() {
 
           {/* Main Content Area */}
           <div className="order-2 lg:order-none lg:col-span-8 xl:col-span-9 space-y-8">
+            {/* Map View — desktop only */}
+            <div className="hidden lg:block">
+              <MapView
+                subject={subject ?? formSubject}
+                comps={hasSearched ? results : allListings}
+                selectedComps={selectedComps}
+                onToggleSelect={handleToggleSelect}
+              />
+            </div>
+
             {/* Results */}
             <div className="card-premium rounded-xl overflow-hidden">
               <div className="px-6 py-4 border-b border-walnut/10 dark:border-gold/10 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-cream to-ivory dark:from-[#111118] dark:to-[#1a1a24]">
