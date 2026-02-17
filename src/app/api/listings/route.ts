@@ -73,7 +73,6 @@ export async function GET() {
   const cutoffStr = cutoff.toISOString().split('T')[0];
 
   const query = `(${FIELDS.statusCat}=|1),(${FIELDS.statusDate}=${cutoffStr}+)`;
-  console.log('[Listings] RETS query:', query);
 
   const records = await retsSearch('Property', 'RE_1', query, SELECT_FIELDS, 100);
 
@@ -138,7 +137,6 @@ export async function GET() {
     })
     .filter(Boolean);
 
-  console.log(`[Listings] Returning ${listings.length} MLS listings`);
   return NextResponse.json(listings);
   } catch (error) {
     console.error('[Listings] Error:', error);

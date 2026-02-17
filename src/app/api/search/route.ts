@@ -326,7 +326,6 @@ export async function POST(request: NextRequest) {
     }
 
     const query = buildDMQL2Query(subject, includeActive);
-    console.log('[API] DMQL2 query:', query);
 
     const records = await retsSearch(
       RENTAL_SEARCH_TYPE,
@@ -346,7 +345,6 @@ export async function POST(request: NextRequest) {
       .sort((a, b) => b.similarityScore - a.similarityScore)
       .slice(0, 25);
 
-    console.log(`[API] Returning ${results.length} comps`);
     return NextResponse.json(results);
   } catch (error) {
     console.error('[API] Search error:', error);

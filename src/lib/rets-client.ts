@@ -242,7 +242,6 @@ export async function retsSearch(
     if (sessionCookies) searchHeaders['Cookie'] = sessionCookies;
 
     const searchUrl = `${capabilities.search}?${searchParams.toString()}`;
-    console.log(`[RETS] Search: ${resource}/${className}`);
 
     const searchRes = await fetch(searchUrl, { headers: searchHeaders });
     if (!searchRes.ok) {
@@ -254,7 +253,6 @@ export async function retsSearch(
     const searchReplyMatch = searchBody.match(/ReplyCode\s*=\s*"(\d+)"/i);
     if (searchReplyMatch && searchReplyMatch[1] !== '0') {
       if (searchReplyMatch[1] === '20201') {
-        console.log('[RETS] No records found');
         return [];
       }
       const searchReplyText = searchBody.match(/ReplyText\s*=\s*"([^"]+)"/i);
@@ -262,7 +260,6 @@ export async function retsSearch(
     }
 
     const records = parseCompactDecoded(searchBody);
-    console.log(`[RETS] Found ${records.length} records`);
     return records;
   } finally {
     if (capabilities?.logout) {
