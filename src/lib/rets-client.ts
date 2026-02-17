@@ -1,382 +1,336 @@
 /**
- * Raw RETS Client for Paragon/FNI MLS
- * No npm dependencies — uses fetch() only
+ * RETS Client for Paragon/FNI MLS — ported from comp-search
+ * Per-request login/search/logout cycle (stateless, reliable)
+ * Uses fetch() only — no npm dependencies
  */
 
-interface RETSSession {
-  sessionCookie: string;
-  capabilities: Record<string, string>;
-  loginTime: number;
+export interface RetsConfig {
+  loginUrl: string;
+  username: string;
+  password: string;
+  userAgent?: string;
 }
 
-interface RETSSearchParams {
-  searchType: string;
-  class: string;
-  query: string;
-  select?: string;
-  limit?: number;
-  offset?: number;
+interface CapabilityUrls {
+  search: string;
+  getObject: string;
+  logout: string;
 }
 
-interface RETSRecord {
-  [key: string]: string;
-}
-
-// Session cache — avoids re-login on every request
-let cachedSession: RETSSession | null = null;
-const SESSION_TTL_MS = 25 * 60 * 1000; // 25 minutes (RETS sessions typically timeout at 30)
-
-function getCredentials() {
+/** Get RETS config from environment variables */
+export function getRetsConfig(): RetsConfig {
   const loginUrl = process.env.RETS_LOGIN_URL;
   const username = process.env.RETS_USERNAME;
   const password = process.env.RETS_PASSWORD;
-  const userAgent = process.env.RETS_USER_AGENT || 'CompAtlas/1.0';
+  const userAgent = process.env.RETS_USER_AGENT || 'RentAtlas/1.0';
 
   if (!loginUrl || !username || !password) {
-    throw new Error('RETS credentials not configured. Set RETS_LOGIN_URL, RETS_USERNAME, RETS_PASSWORD in .env.local');
+    throw new Error(
+      'RETS credentials not configured. Set RETS_LOGIN_URL, RETS_USERNAME, RETS_PASSWORD in .env.local'
+    );
   }
 
   return { loginUrl, username, password, userAgent };
 }
 
-function basicAuthHeader(username: string, password: string): string {
-  return 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
+/** Check if RETS credentials are configured */
+export function hasRetsConfig(): boolean {
+  return !!(process.env.RETS_LOGIN_URL && process.env.RETS_USERNAME && process.env.RETS_PASSWORD);
 }
 
-function isSessionValid(): boolean {
-  if (!cachedSession) return false;
-  return Date.now() - cachedSession.loginTime < SESSION_TTL_MS;
-}
+// ---------------------------------------------------------------------------
+// XML / response parsers
+// ---------------------------------------------------------------------------
 
-/**
- * Parse RETS login response to extract capability URLs
- * Login response contains key-value pairs like:
- * Search=/rets/fnisrets.aspx/CAPEMAY/search
- * GetObject=/rets/fnisrets.aspx/CAPEMAY/getobject
- */
-function parseLoginResponse(body: string, baseUrl: string): Record<string, string> {
-  const capabilities: Record<string, string> = {};
-  const lines = body.split('\n');
+/** Extract capability URLs from RETS login response */
+function parseLoginResponse(xml: string, baseUrl: string): CapabilityUrls {
+  const base = new URL(baseUrl);
 
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('<') || trimmed.startsWith('#')) continue;
-
-    const eqIndex = trimmed.indexOf('=');
-    if (eqIndex === -1) continue;
-
-    const key = trimmed.substring(0, eqIndex).trim();
-    let value = trimmed.substring(eqIndex + 1).trim();
-
-    // Make relative URLs absolute
-    if (value.startsWith('/')) {
-      const url = new URL(baseUrl);
-      value = `${url.protocol}//${url.host}${value}`;
-    }
-
-    capabilities[key] = value;
-  }
-
-  return capabilities;
-}
-
-/**
- * Parse COMPACT-DECODED response format
- * Format:
- *   <COLUMNS>\tCol1\tCol2\t...</COLUMNS>
- *   <DATA>\tVal1\tVal2\t...</DATA>
- *   <DATA>\tVal1\tVal2\t...</DATA>
- */
-function parseCompactDecoded(body: string): RETSRecord[] {
-  const records: RETSRecord[] = [];
-
-  // Extract columns
-  const columnsMatch = body.match(/<COLUMNS>\t?([\s\S]*?)<\/COLUMNS>/);
-  if (!columnsMatch) {
-    console.error('[RETS] No COLUMNS found in response');
-    return records;
-  }
-
-  const columns = columnsMatch[1].split('\t').filter(c => c.length > 0);
-
-  // Extract data rows
-  const dataRegex = /<DATA>\t?([\s\S]*?)<\/DATA>/g;
-  let match;
-
-  while ((match = dataRegex.exec(body)) !== null) {
-    const values = match[1].split('\t');
-    const record: RETSRecord = {};
-
-    for (let i = 0; i < columns.length; i++) {
-      record[columns[i]] = values[i] || '';
-    }
-
-    records.push(record);
-  }
-
-  return records;
-}
-
-/**
- * Extract reply code from RETS response
- * <RETS ReplyCode="0" ReplyText="Success">
- */
-function parseReplyCode(body: string): { code: number; text: string } {
-  const match = body.match(/ReplyCode="(\d+)".*?ReplyText="([^"]*)"/);
-  if (!match) return { code: -1, text: 'Could not parse RETS response' };
-  return { code: parseInt(match[1], 10), text: match[2] };
-}
-
-/**
- * Login to RETS server, cache session
- */
-export async function retsLogin(): Promise<RETSSession> {
-  if (isSessionValid() && cachedSession) {
-    return cachedSession;
-  }
-
-  const { loginUrl, username, password, userAgent } = getCredentials();
-
-  console.log(`[RETS] Logging in to ${loginUrl}`);
-
-  const response = await fetch(loginUrl, {
-    method: 'GET',
-    headers: {
-      'Authorization': basicAuthHeader(username, password),
-      'User-Agent': userAgent,
-      'RETS-Version': 'RETS/1.7.2',
-      'Accept': '*/*',
-    },
-    redirect: 'follow',
-  });
-
-  if (!response.ok) {
-    throw new Error(`RETS login failed: ${response.status} ${response.statusText}`);
-  }
-
-  const body = await response.text();
-  const reply = parseReplyCode(body);
-
-  if (reply.code !== 0) {
-    throw new Error(`RETS login error: [${reply.code}] ${reply.text}`);
-  }
-
-  // Extract session cookie from response headers
-  const setCookie = response.headers.get('set-cookie') || '';
-  const sessionCookie = setCookie.split(';')[0] || '';
-
-  const capabilities = parseLoginResponse(body, loginUrl);
-
-  console.log('[RETS] Login successful. Capabilities:', Object.keys(capabilities).join(', '));
-
-  cachedSession = {
-    sessionCookie,
-    capabilities,
-    loginTime: Date.now(),
+  const extract = (key: string): string => {
+    const re = new RegExp(`${key}\\s*=\\s*(.+)`, 'i');
+    const m = xml.match(re);
+    if (!m) return '';
+    const value = m[1].trim();
+    if (value.startsWith('http')) return value;
+    return `${base.origin}${value}`;
   };
 
-  return cachedSession;
+  return {
+    search: extract('Search'),
+    getObject: extract('GetObject'),
+    logout: extract('Logout'),
+  };
 }
 
 /**
- * Search RETS server with DMQL2 query
+ * Parse COMPACT-DECODED RETS response into records
+ *
+ * Format:
+ *   <DELIMITER value="09"/>
+ *   <COLUMNS>\tField1\tField2\t</COLUMNS>
+ *   <DATA>\tVal1\tVal2\t</DATA>
  */
-export async function retsSearch(params: RETSSearchParams): Promise<RETSRecord[]> {
-  const session = await retsLogin();
-  const { username, password, userAgent } = getCredentials();
+function parseCompactDecoded(text: string): Record<string, string>[] {
+  const delimMatch = text.match(/<DELIMITER\s+value\s*=\s*"([^"]+)"/i);
+  const delim = delimMatch ? String.fromCharCode(parseInt(delimMatch[1], 16)) : '\t';
 
-  const searchUrl = session.capabilities['Search'];
-  if (!searchUrl) {
-    throw new Error('RETS Search capability URL not found. Available: ' + Object.keys(session.capabilities).join(', '));
+  const colMatch = text.match(/<COLUMNS>([\s\S]*?)<\/COLUMNS>/i);
+  if (!colMatch) return [];
+  const columns = colMatch[1].split(delim).filter(Boolean);
+
+  const rows: Record<string, string>[] = [];
+  const dataRe = /<DATA>([\s\S]*?)<\/DATA>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = dataRe.exec(text)) !== null) {
+    const values = m[1].split(delim);
+    if (values.length > 0 && values[0] === '') values.shift();
+    if (values.length > 0 && values[values.length - 1] === '') values.pop();
+
+    const row: Record<string, string> = {};
+    columns.forEach((col, i) => {
+      row[col] = values[i] ?? '';
+    });
+    rows.push(row);
   }
 
-  const searchParams = new URLSearchParams({
-    'SearchType': params.searchType,
-    'Class': params.class,
-    'Query': params.query,
-    'QueryType': 'DMQL2',
-    'Format': 'COMPACT-DECODED',
-    'Limit': String(params.limit || 200),
-    'Count': '1',
-    'StandardNames': '0',
-  });
-
-  if (params.select) {
-    searchParams.set('Select', params.select);
-  }
-
-  if (params.offset) {
-    searchParams.set('Offset', String(params.offset));
-  }
-
-  const url = `${searchUrl}?${searchParams.toString()}`;
-  console.log(`[RETS] Search: ${params.searchType}/${params.class} | Query: ${params.query}`);
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Authorization': basicAuthHeader(username, password),
-      'User-Agent': userAgent,
-      'RETS-Version': 'RETS/1.7.2',
-      'Accept': '*/*',
-      ...(session.sessionCookie ? { 'Cookie': session.sessionCookie } : {}),
-    },
-  });
-
-  if (!response.ok) {
-    // If unauthorized, clear session and retry once
-    if (response.status === 401) {
-      console.log('[RETS] Session expired, re-logging in...');
-      cachedSession = null;
-      return retsSearch(params);
-    }
-    throw new Error(`RETS search failed: ${response.status} ${response.statusText}`);
-  }
-
-  const body = await response.text();
-  const reply = parseReplyCode(body);
-
-  // Code 0 = success, Code 20201 = no records found
-  if (reply.code !== 0 && reply.code !== 20201) {
-    throw new Error(`RETS search error: [${reply.code}] ${reply.text}`);
-  }
-
-  if (reply.code === 20201) {
-    console.log('[RETS] No records found');
-    return [];
-  }
-
-  const records = parseCompactDecoded(body);
-  console.log(`[RETS] Found ${records.length} records`);
-
-  return records;
+  return rows;
 }
 
-/**
- * Logout from RETS server
- */
-export async function retsLogout(): Promise<void> {
-  if (!cachedSession) return;
-
-  const { username, password, userAgent } = getCredentials();
-  const logoutUrl = cachedSession.capabilities['Logout'];
-
-  if (logoutUrl) {
-    try {
-      await fetch(logoutUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': basicAuthHeader(username, password),
-          'User-Agent': userAgent,
-          'RETS-Version': 'RETS/1.7.2',
-          ...(cachedSession.sessionCookie ? { 'Cookie': cachedSession.sessionCookie } : {}),
-        },
-      });
-      console.log('[RETS] Logged out');
-    } catch (e) {
-      console.warn('[RETS] Logout error:', e);
-    }
-  }
-
-  cachedSession = null;
-}
+// ---------------------------------------------------------------------------
+// Photo fetching
+// ---------------------------------------------------------------------------
 
 /**
- * Fetch a property photo via RETS GetObject
- * Returns binary image data + content type, or null if unavailable
+ * Fetch a property photo via RETS GetObject (per-request login cycle)
  */
 export async function retsGetObject(
-  resourceId: string,
-  photoIndex: number = 0
+  listingId: string,
+  photoIdx = 0,
 ): Promise<{ data: ArrayBuffer; contentType: string } | null> {
+  const config = getRetsConfig();
+  const authHeader = 'Basic ' + Buffer.from(`${config.username}:${config.password}`).toString('base64');
+  const baseHeaders: Record<string, string> = {
+    Authorization: authHeader,
+    'User-Agent': config.userAgent || 'RentAtlas/1.0',
+    'RETS-Version': 'RETS/1.8',
+    Accept: '*/*',
+  };
+
+  let capabilities: CapabilityUrls | null = null;
+  let sessionCookies = '';
+
   try {
-    const session = await retsLogin();
-    const { username, password, userAgent } = getCredentials();
+    // --- LOGIN ---
+    const loginRes = await fetch(config.loginUrl, { headers: baseHeaders, redirect: 'manual' });
+    if (!loginRes.ok && loginRes.status !== 302) {
+      throw new Error(`RETS login failed: ${loginRes.status}`);
+    }
+    const loginBody = await loginRes.text();
 
-    const getObjectUrl = session.capabilities['GetObject'];
-    if (!getObjectUrl) {
-      console.warn('[RETS] GetObject capability URL not found');
+    const setCookies = loginRes.headers.getSetCookie?.() || [];
+    sessionCookies = setCookies.map((c: string) => c.split(';')[0]).join('; ');
+
+    const replyCodeMatch = loginBody.match(/ReplyCode\s*=\s*"(\d+)"/i);
+    if (replyCodeMatch && replyCodeMatch[1] !== '0') {
       return null;
     }
 
-    const params = new URLSearchParams({
-      'Type': 'Photo',
-      'Resource': 'Property',
-      'ID': `${resourceId}:${photoIndex}`,
-      'Location': '0',
+    capabilities = parseLoginResponse(loginBody, config.loginUrl);
+    if (!capabilities.getObject) return null;
+
+    // --- GET OBJECT ---
+    const objectParams = new URLSearchParams({
+      Type: 'Photo',
+      Resource: 'Property',
+      ID: `${listingId}:${photoIdx}`,
     });
 
-    const url = `${getObjectUrl}?${params.toString()}`;
-    console.log(`[RETS] GetObject: ${resourceId}:${photoIndex}`);
+    const objectHeaders = { ...baseHeaders };
+    if (sessionCookies) objectHeaders['Cookie'] = sessionCookies;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': basicAuthHeader(username, password),
-        'User-Agent': userAgent,
-        'RETS-Version': 'RETS/1.7.2',
-        'Accept': 'image/*',
-        ...(session.sessionCookie ? { 'Cookie': session.sessionCookie } : {}),
-      },
-    });
+    const objectUrl = `${capabilities.getObject}?${objectParams.toString()}`;
+    const objectRes = await fetch(objectUrl, { headers: objectHeaders });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        cachedSession = null;
-        return retsGetObject(resourceId, photoIndex);
-      }
-      console.warn(`[RETS] GetObject failed: ${response.status}`);
+    if (!objectRes.ok) return null;
+
+    const contentType = objectRes.headers.get('content-type') || 'image/jpeg';
+    if (contentType.includes('text/xml') || contentType.includes('text/html')) {
       return null;
     }
 
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
-
-    // RETS may return a text error instead of an image
-    if (contentType.startsWith('text/')) {
-      console.warn('[RETS] GetObject returned text instead of image');
-      return null;
-    }
-
-    const data = await response.arrayBuffer();
-    if (data.byteLength < 100) {
-      console.warn('[RETS] GetObject returned empty/tiny response');
-      return null;
-    }
+    const data = await objectRes.arrayBuffer();
+    if (data.byteLength < 100) return null;
 
     return { data, contentType };
   } catch (error) {
     console.error('[RETS] GetObject error:', error);
     return null;
+  } finally {
+    if (capabilities?.logout) {
+      const logoutHeaders = { ...baseHeaders };
+      if (sessionCookies) logoutHeaders['Cookie'] = sessionCookies;
+      fetch(capabilities.logout, { headers: logoutHeaders }).catch(() => {});
+    }
   }
 }
 
+// ---------------------------------------------------------------------------
+// Search
+// ---------------------------------------------------------------------------
+
 /**
- * Get RETS server metadata (useful for discovering field names)
+ * Per-request RETS login → search → logout cycle
+ */
+export async function retsSearch(
+  resource: string,
+  className: string,
+  query: string,
+  selectFields?: string[],
+  limit = 50,
+): Promise<Record<string, string>[]> {
+  const config = getRetsConfig();
+  const authHeader = 'Basic ' + Buffer.from(`${config.username}:${config.password}`).toString('base64');
+  const baseHeaders: Record<string, string> = {
+    Authorization: authHeader,
+    'User-Agent': config.userAgent || 'RentAtlas/1.0',
+    'RETS-Version': 'RETS/1.8',
+    Accept: '*/*',
+  };
+
+  let capabilities: CapabilityUrls | null = null;
+  let sessionCookies = '';
+
+  try {
+    // --- LOGIN ---
+    const loginRes = await fetch(config.loginUrl, { headers: baseHeaders, redirect: 'manual' });
+    if (!loginRes.ok && loginRes.status !== 302) {
+      throw new Error(`RETS login failed: ${loginRes.status} ${loginRes.statusText}`);
+    }
+    const loginBody = await loginRes.text();
+
+    const setCookies = loginRes.headers.getSetCookie?.() || [];
+    sessionCookies = setCookies.map((c: string) => c.split(';')[0]).join('; ');
+
+    const replyCodeMatch = loginBody.match(/ReplyCode\s*=\s*"(\d+)"/i);
+    if (replyCodeMatch && replyCodeMatch[1] !== '0') {
+      const replyText = loginBody.match(/ReplyText\s*=\s*"([^"]+)"/i);
+      throw new Error(`RETS login error ${replyCodeMatch[1]}: ${replyText?.[1] || 'Unknown'}`);
+    }
+
+    capabilities = parseLoginResponse(loginBody, config.loginUrl);
+    if (!capabilities.search) {
+      throw new Error('RETS login succeeded but no Search capability URL found');
+    }
+
+    // --- SEARCH ---
+    const searchParams = new URLSearchParams({
+      SearchType: resource,
+      Class: className,
+      Query: query,
+      QueryType: 'DMQL2',
+      Format: 'COMPACT-DECODED',
+      Limit: String(limit),
+      Count: '1',
+      StandardNames: '0',
+    });
+
+    if (selectFields?.length) {
+      searchParams.set('Select', selectFields.join(','));
+    }
+
+    const searchHeaders = { ...baseHeaders };
+    if (sessionCookies) searchHeaders['Cookie'] = sessionCookies;
+
+    const searchUrl = `${capabilities.search}?${searchParams.toString()}`;
+    console.log(`[RETS] Search: ${resource}/${className}`);
+
+    const searchRes = await fetch(searchUrl, { headers: searchHeaders });
+    if (!searchRes.ok) {
+      throw new Error(`RETS search failed: ${searchRes.status} ${searchRes.statusText}`);
+    }
+
+    const searchBody = await searchRes.text();
+
+    const searchReplyMatch = searchBody.match(/ReplyCode\s*=\s*"(\d+)"/i);
+    if (searchReplyMatch && searchReplyMatch[1] !== '0') {
+      if (searchReplyMatch[1] === '20201') {
+        console.log('[RETS] No records found');
+        return [];
+      }
+      const searchReplyText = searchBody.match(/ReplyText\s*=\s*"([^"]+)"/i);
+      throw new Error(`RETS search error ${searchReplyMatch[1]}: ${searchReplyText?.[1] || 'Unknown'}`);
+    }
+
+    const records = parseCompactDecoded(searchBody);
+    console.log(`[RETS] Found ${records.length} records`);
+    return records;
+  } finally {
+    if (capabilities?.logout) {
+      const logoutHeaders = { ...baseHeaders };
+      if (sessionCookies) logoutHeaders['Cookie'] = sessionCookies;
+      fetch(capabilities.logout, { headers: logoutHeaders }).catch(() => {});
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Metadata
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch RETS metadata to discover available resources/classes
  */
 export async function retsGetMetadata(type: string, id: string): Promise<string> {
-  const session = await retsLogin();
-  const { username, password, userAgent } = getCredentials();
+  const config = getRetsConfig();
+  const authHeader = 'Basic ' + Buffer.from(`${config.username}:${config.password}`).toString('base64');
+  const baseHeaders: Record<string, string> = {
+    Authorization: authHeader,
+    'User-Agent': config.userAgent || 'RentAtlas/1.0',
+    'RETS-Version': 'RETS/1.8',
+    Accept: '*/*',
+  };
 
-  const metadataUrl = session.capabilities['GetMetadata'];
-  if (!metadataUrl) {
-    throw new Error('RETS GetMetadata capability URL not found');
+  let capabilities: CapabilityUrls | null = null;
+  let sessionCookies = '';
+
+  try {
+    const loginRes = await fetch(config.loginUrl, { headers: baseHeaders, redirect: 'manual' });
+    if (!loginRes.ok && loginRes.status !== 302) {
+      throw new Error(`RETS login failed: ${loginRes.status}`);
+    }
+    const loginBody = await loginRes.text();
+
+    const setCookies = loginRes.headers.getSetCookie?.() || [];
+    sessionCookies = setCookies.map((c: string) => c.split(';')[0]).join('; ');
+
+    capabilities = parseLoginResponse(loginBody, config.loginUrl);
+    const getMetadataUrl = capabilities.search?.replace(/search/i, 'getmetadata') || '';
+
+    if (!getMetadataUrl) {
+      // Try extracting GetMetadata capability directly
+      const metaExtract = loginBody.match(/GetMetadata\s*=\s*(.+)/i);
+      if (!metaExtract) throw new Error('GetMetadata capability not found');
+      const metaUrl = metaExtract[1].trim().startsWith('http')
+        ? metaExtract[1].trim()
+        : `${new URL(config.loginUrl).origin}${metaExtract[1].trim()}`;
+
+      const params = new URLSearchParams({ Type: type, ID: id, Format: 'COMPACT' });
+      const metaHeaders = { ...baseHeaders };
+      if (sessionCookies) metaHeaders['Cookie'] = sessionCookies;
+      const res = await fetch(`${metaUrl}?${params}`, { headers: metaHeaders });
+      return res.text();
+    }
+
+    const params = new URLSearchParams({ Type: type, ID: id, Format: 'COMPACT' });
+    const metaHeaders = { ...baseHeaders };
+    if (sessionCookies) metaHeaders['Cookie'] = sessionCookies;
+    const res = await fetch(`${getMetadataUrl}?${params}`, { headers: metaHeaders });
+    return res.text();
+  } finally {
+    if (capabilities?.logout) {
+      const logoutHeaders = { ...baseHeaders };
+      if (sessionCookies) logoutHeaders['Cookie'] = sessionCookies;
+      fetch(capabilities.logout, { headers: logoutHeaders }).catch(() => {});
+    }
   }
-
-  const params = new URLSearchParams({
-    'Type': type,
-    'ID': id,
-    'Format': 'COMPACT',
-  });
-
-  const response = await fetch(`${metadataUrl}?${params.toString()}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': basicAuthHeader(username, password),
-      'User-Agent': userAgent,
-      'RETS-Version': 'RETS/1.7.2',
-      ...(session.sessionCookie ? { 'Cookie': session.sessionCookie } : {}),
-    },
-  });
-
-  return response.text();
 }

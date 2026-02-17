@@ -3,132 +3,193 @@ import { retsSearch } from '@/lib/rets-client';
 import { SubjectProperty, RentalCompResult, PropertyType, ListingStatus, LeaseTermType } from '@/types/property';
 
 /**
- * Build a DMQL2 query for rental comp search
+ * Cape May County MLS (Paragon RETS) — Rental Search
  *
- * Paragon MLS rental fields (common system names):
- * - StandardStatus: Active, Closed (Leased), Pending
- * - City: city name
- * - BedroomsTotal: bedroom count
- * - BathroomsTotalInteger: bathroom count
- * - LivingArea: square footage
- * - ListPrice: monthly rent amount (for rentals)
- * - ClosePrice: final lease amount (if leased)
- * - ListDate: date listed
- * - CloseDate: lease execution date
- * - PropertyType: Residential Lease, etc.
- *
- * NOTE: Your MLS may use a different resource/class for rentals.
- * Common options: Property/RL_2, Property/RE_2, or RentalListing/RL_1
- * Check your MLS metadata to confirm. Update RENTAL_SEARCH_TYPE and
- * RENTAL_CLASS constants below.
+ * Uses Paragon system field names (StandardNames=0).
+ * Class RE_1 = Residential (includes rentals in many MLSes).
+ * If your MLS has a dedicated rental class (RL_2, etc.), update RENTAL_CLASS.
  */
 
-// Configure these for your specific MLS
+// Cape May MLS system field names (NOT standard names)
+const FIELDS = {
+  listingId: 'L_ListingID',
+  address: 'L_Address',
+  city: 'L_City',
+  zip: 'L_Zip',
+  bedrooms: 'L_Keyword1',
+  bathsFull: 'L_Keyword2',
+  bathsTotal: 'LM_Dec_13',
+  sqft: 'L_SquareFeet',
+  yearBuilt: 'LM_Char10_1',
+  type: 'L_Type_',
+  askingPrice: 'L_AskingPrice',
+  soldPrice: 'L_SoldPrice',
+  statusDate: 'L_StatusDate',
+  statusCat: 'L_StatusCatID',
+  status: 'L_Status',
+  lat: 'LMD_MP_Latitude',
+  lng: 'LMD_MP_Longitude',
+  photoCount: 'L_PictureCount',
+};
+
+const SELECT_FIELDS = [
+  FIELDS.listingId, FIELDS.address, FIELDS.city, FIELDS.zip,
+  FIELDS.bedrooms, FIELDS.bathsFull, FIELDS.bathsTotal, FIELDS.sqft,
+  FIELDS.yearBuilt, FIELDS.type, FIELDS.askingPrice, FIELDS.soldPrice,
+  FIELDS.statusDate, FIELDS.statusCat, FIELDS.status,
+  FIELDS.lat, FIELDS.lng, FIELDS.photoCount,
+];
+
+// Search config — RE_1 is residential, which includes rentals in many MLSes
 const RENTAL_SEARCH_TYPE = 'Property';
-const RENTAL_CLASS = 'RL_2'; // Rental class — check your MLS metadata
+const RENTAL_CLASS = 'RE_1';
+
+// Cape May County city lookup values
+const CITY_LOOKUP: Record<string, string> = {
+  'sea isle city': 'SeaIsleC',
+  'avalon': 'Avalon',
+  'stone harbor': 'StoneHar',
+  'cape may': 'CapeMay',
+  'cape may court house': 'CMCrtHse',
+  'cape may point': 'CapeMyPt',
+  'wildwood': 'Wildwood',
+  'wildwood crest': 'WildwCrs',
+  'north wildwood': 'NWildwood',
+  'ocean city': 'OceanCty',
+  'upper township': 'UpperTwp',
+  'middle township': 'MiddleTp',
+  'lower township': 'LowerTwp',
+  'dennis township': 'DennisTp',
+  'woodbine': 'Woodbine',
+  'west cape may': 'WCapeMay',
+  'west wildwood': 'WWldwood',
+};
+
+// City center coords for fallback when MLS doesn't return lat/lng
+const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
+  'Sea Isle City': { lat: 39.1534, lng: -74.6929 },
+  'Avalon': { lat: 39.1012, lng: -74.7177 },
+  'Stone Harbor': { lat: 39.0526, lng: -74.7608 },
+  'Cape May': { lat: 38.9351, lng: -74.9060 },
+  'Cape May Court House': { lat: 39.0826, lng: -74.8238 },
+  'Cape May Point': { lat: 38.9376, lng: -74.9658 },
+  'Wildwood': { lat: 38.9918, lng: -74.8148 },
+  'Wildwood Crest': { lat: 38.9748, lng: -74.8238 },
+  'North Wildwood': { lat: 39.0026, lng: -74.7988 },
+  'Ocean City': { lat: 39.2776, lng: -74.5746 },
+  'Upper Township': { lat: 39.2048, lng: -74.7238 },
+  'Middle Township': { lat: 39.0426, lng: -74.8438 },
+  'Lower Township': { lat: 38.9626, lng: -74.8838 },
+  'Dennis Township': { lat: 39.1926, lng: -74.8238 },
+  'Woodbine': { lat: 39.2416, lng: -74.8128 },
+  'West Cape May': { lat: 38.9398, lng: -74.9380 },
+  'West Wildwood': { lat: 38.9928, lng: -74.8268 },
+};
+
+const STATUS_ACTIVE = '1';
+const STATUS_SOLD = '2';
+
+function lookupCity(city: string): string | null {
+  const lower = city.toLowerCase().trim();
+  return CITY_LOOKUP[lower] || null;
+}
 
 function buildDMQL2Query(subject: SubjectProperty, includeActive: boolean): string {
   const conditions: string[] = [];
 
-  // Status filter — leased rentals, optionally include active
-  if (includeActive) {
-    conditions.push('(StandardStatus=|Active,Closed,Pending)');
+  // City filter
+  const cityLookup = lookupCity(subject.city);
+  if (cityLookup) {
+    conditions.push(`(${FIELDS.city}=|${cityLookup})`);
   } else {
-    conditions.push('(StandardStatus=|Closed)');
+    // Search all Cape May cities
+    const allCities = Object.values(CITY_LOOKUP).join(',');
+    conditions.push(`(${FIELDS.city}=|${allCities})`);
   }
 
-  // City match
-  if (subject.city) {
-    conditions.push(`(City=|${subject.city})`);
+  // Status filter
+  if (includeActive) {
+    conditions.push(`(${FIELDS.statusCat}=|${STATUS_ACTIVE},${STATUS_SOLD})`);
+  } else {
+    conditions.push(`(${FIELDS.statusCat}=|${STATUS_SOLD})`);
   }
 
   // Bedrooms: subject ± 1
-  const minBeds = Math.max(0, subject.bedrooms - 1);
-  const maxBeds = subject.bedrooms + 1;
-  conditions.push(`(BedroomsTotal=${minBeds}-${maxBeds})`);
+  if (subject.bedrooms > 0) {
+    const minBeds = Math.max(1, subject.bedrooms - 1);
+    const maxBeds = subject.bedrooms + 1;
+    conditions.push(`(${FIELDS.bedrooms}=${minBeds}-${maxBeds})`);
+  }
 
   // Bathrooms: subject ± 1
-  const minBaths = Math.max(1, subject.bathrooms - 1);
-  const maxBaths = subject.bathrooms + 1;
-  conditions.push(`(BathroomsTotalInteger=${minBaths}-${maxBaths})`);
+  if (subject.bathrooms > 0) {
+    const minBaths = Math.max(1, Math.floor(subject.bathrooms - 1));
+    const maxBaths = Math.ceil(subject.bathrooms + 1);
+    conditions.push(`(${FIELDS.bathsFull}=${minBaths}-${maxBaths})`);
+  }
 
-  // Living area: subject ± 20%
-  const minSqft = Math.round(subject.sqft * 0.80);
-  const maxSqft = Math.round(subject.sqft * 1.20);
-  conditions.push(`(LivingArea=${minSqft}-${maxSqft})`);
+  // Sqft: ± 25%
+  if (subject.sqft > 0) {
+    const minSqft = Math.round(subject.sqft * 0.75);
+    const maxSqft = Math.round(subject.sqft * 1.25);
+    conditions.push(`(${FIELDS.sqft}=${minSqft}-${maxSqft})`);
+  }
 
-  // Date: last 12 months (list date or close date)
+  // Date: last 12 months
   const cutoff = new Date();
   cutoff.setFullYear(cutoff.getFullYear() - 1);
   const cutoffStr = cutoff.toISOString().split('T')[0];
-  conditions.push(`(ListDate=${cutoffStr}+)`);
-
-  // Property type mapping for rentals
-  const typeMap: Record<string, string> = {
-    'Single Family': 'Residential Lease',
-    'Condo': 'Condominium Lease',
-    'Townhouse': 'Townhouse Lease',
-    'Duplex': 'Multi-Family',
-    'Triplex': 'Multi-Family',
-    'Fourplex': 'Multi-Family',
-    'Apartment': 'Residential Lease',
-  };
-  if (subject.propertyType && typeMap[subject.propertyType]) {
-    conditions.push(`(PropertyType=|${typeMap[subject.propertyType]})`);
-  }
+  conditions.push(`(${FIELDS.statusDate}=${cutoffStr}+)`);
 
   return conditions.join(',');
 }
 
-/**
- * Map RETS record to RentalCompResult
- */
 function mapRETSRecord(record: Record<string, string>, subject: SubjectProperty): RentalCompResult | null {
-  const id = record['ListingKey'] || record['ListingId'] || record['sysid'] || '';
-  const address = record['UnparsedAddress'] || record['StreetAddress'] ||
-    [record['StreetNumber'], record['StreetName'], record['StreetSuffix']].filter(Boolean).join(' ') || '';
-  const city = record['City'] || '';
-  const state = record['StateOrProvince'] || subject.state || 'FL';
-  const zip = record['PostalCode'] || '';
-  const bedrooms = parseInt(record['BedroomsTotal'] || '0', 10);
-  const bathrooms = parseInt(record['BathroomsTotalInteger'] || record['BathroomsFull'] || '0', 10);
-  const sqft = parseInt(record['LivingArea'] || record['BuildingAreaTotal'] || '0', 10);
-  const yearBuilt = parseInt(record['YearBuilt'] || '0', 10);
-  const daysOnMarket = parseInt(record['DaysOnMarket'] || record['CumulativeDaysOnMarket'] || '0', 10);
-  const lat = parseFloat(record['Latitude'] || '0');
-  const lng = parseFloat(record['Longitude'] || '0');
+  const listingId = record[FIELDS.listingId] || '';
+  const address = record[FIELDS.address] || '';
+  const city = record[FIELDS.city] || '';
+  const state = 'NJ';
+  const zip = record[FIELDS.zip] || '';
+  const bedrooms = Number(record[FIELDS.bedrooms]) || 0;
+  const bathsFull = Number(record[FIELDS.bathsFull]) || 0;
+  const bathrooms = Number(record[FIELDS.bathsTotal]) || bathsFull;
+  const sqft = Number(record[FIELDS.sqft]) || 0;
+  const yearBuilt = Number(record[FIELDS.yearBuilt]) || 0;
+  const photoCount = Math.min(Number(record[FIELDS.photoCount]) || 0, 10);
 
-  // Rent price: use ClosePrice (actual lease amount) if available, else ListPrice
-  const rentPrice = parseFloat(record['ClosePrice'] || record['ListPrice'] || '0');
-  const listDate = record['ListDate'] || '';
-  const leaseDate = record['CloseDate'] || '';
+  // Price: use sold price if available, else asking price
+  // For rental context, this represents the monthly rent or list price
+  const rentPrice = Number(record[FIELDS.soldPrice]) || Number(record[FIELDS.askingPrice]) || 0;
+  const listDate = record[FIELDS.statusDate] || '';
 
   // Status mapping
-  const rawStatus = (record['StandardStatus'] || record['Status'] || 'Active').toLowerCase();
+  const statusCat = record[FIELDS.statusCat] || '';
   let status: ListingStatus = 'Active';
-  if (rawStatus.includes('closed') || rawStatus.includes('leased')) status = 'Leased';
-  else if (rawStatus.includes('pending')) status = 'Pending';
+  if (statusCat === STATUS_SOLD) status = 'Leased';
+  else if (statusCat === '3') status = 'Pending';
 
   // Skip records with missing critical data
-  if (!id || !rentPrice || !sqft) return null;
+  if (!listingId || !rentPrice || !sqft) return null;
 
-  const rawType = record['PropertyType'] || record['PropertySubType'] || '';
+  const rawType = record[FIELDS.type] || '';
   const propertyType = mapPropertyType(rawType);
 
-  // Amenity fields — try common MLS field names
-  const furnished = parseBool(record['Furnished'] || record['FurnishedYN'] || '');
-  const petsAllowed = parseBool(record['PetsAllowed'] || record['PetsAllowedYN'] || '');
-  const parkingSpaces = parseInt(record['ParkingTotal'] || record['ParkingSpaces'] || '0', 10);
-  const garageSpaces = parseInt(record['GarageSpaces'] || '0', 10);
-  const hasPool = parseBool(record['PoolPrivateYN'] || record['PoolFeatures'] || '');
-  const hasWasherDryer = parseBool(record['LaundryFeatures'] || '') ||
-    (record['Appliances'] || '').toLowerCase().includes('washer');
-  const utilitiesIncluded = parseBool(record['UtilitiesIncluded'] || '') ||
-    (record['RentIncludes'] || '').toLowerCase().includes('utilit');
+  // Generate photo URLs
+  const photos: string[] = [];
+  for (let i = 0; i < Math.max(photoCount, 1); i++) {
+    photos.push(`/api/photos/${listingId}?idx=${i}`);
+  }
 
-  // Lease term
-  const rawLeaseTerm = record['LeaseTerm'] || record['TermsOfLease'] || '';
-  const leaseTerm = mapLeaseTerm(rawLeaseTerm);
+  // Lat/Lng with city center fallback
+  let lat = Number(record[FIELDS.lat]) || 0;
+  let lng = Number(record[FIELDS.lng]) || 0;
+  if (lat === 0 && lng === 0) {
+    const cityCenter = CITY_COORDS[city];
+    if (cityCenter) {
+      lat = cityCenter.lat + (Math.random() - 0.5) * 0.006;
+      lng = cityCenter.lng + (Math.random() - 0.5) * 0.006;
+    }
+  }
 
   // Distance
   let distanceMiles = 0;
@@ -138,13 +199,12 @@ function mapRETSRecord(record: Record<string, string>, subject: SubjectProperty)
 
   const rentPerSqft = sqft > 0 ? Math.round((rentPrice / sqft) * 100) / 100 : 0;
   const similarityScore = calculateSimilarityScore(
-    { bedrooms, bathrooms, sqft, listDate, leaseDate, furnished, petsAllowed, hasWasherDryer, hasPool, parkingSpaces, garageSpaces },
-    subject,
-    distanceMiles
+    { bedrooms, bathrooms, sqft, listDate, distanceMiles },
+    subject
   );
 
   return {
-    id,
+    id: listingId,
     address,
     city,
     state,
@@ -156,20 +216,20 @@ function mapRETSRecord(record: Record<string, string>, subject: SubjectProperty)
     propertyType,
     rentPrice,
     listDate,
-    leaseDate,
+    leaseDate: record[FIELDS.statusDate] || '',
     status,
-    daysOnMarket,
+    daysOnMarket: 0,
     lat,
     lng,
-    photos: [`/api/photos/${id}`],
-    leaseTerm,
-    furnished,
-    petsAllowed,
-    parkingSpaces,
-    garageSpaces,
-    hasPool,
-    hasWasherDryer,
-    utilitiesIncluded,
+    photos,
+    leaseTerm: '12 Months' as LeaseTermType,
+    furnished: false,
+    petsAllowed: false,
+    parkingSpaces: 0,
+    garageSpaces: 0,
+    hasPool: false,
+    hasWasherDryer: false,
+    utilitiesIncluded: false,
     distanceMiles,
     rentPerSqft,
     selected: false,
@@ -188,20 +248,6 @@ function mapPropertyType(mlsType: string): PropertyType {
   return 'Single Family';
 }
 
-function mapLeaseTerm(raw: string): LeaseTermType {
-  const t = raw.toLowerCase();
-  if (t.includes('month-to-month') || t.includes('mtm')) return 'Month-to-Month';
-  if (t.includes('6') || t.includes('six')) return '6 Months';
-  if (t.includes('24') || t.includes('two year') || t.includes('2 year')) return '24 Months';
-  if (t.includes('12') || t.includes('annual') || t.includes('year') || t.includes('1 year')) return '12 Months';
-  return '12 Months'; // default
-}
-
-function parseBool(value: string): boolean {
-  const v = value.toLowerCase().trim();
-  return v === 'yes' || v === 'true' || v === '1' || v === 'y';
-}
-
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 3959;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -215,23 +261,23 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 }
 
 function calculateSimilarityScore(
-  property: {
-    bedrooms: number; bathrooms: number; sqft: number;
-    listDate: string; leaseDate: string;
-    furnished: boolean; petsAllowed: boolean; hasWasherDryer: boolean;
-    hasPool: boolean; parkingSpaces: number; garageSpaces: number;
-  },
-  subject: SubjectProperty,
-  distanceMiles: number
+  property: { bedrooms: number; bathrooms: number; sqft: number; listDate: string; distanceMiles: number },
+  subject: SubjectProperty
 ): number {
   let score = 0;
 
   // Sqft similarity (25 points max)
-  const sqftDiffPercent = Math.abs(property.sqft - subject.sqft) / subject.sqft;
-  score += Math.max(0, 25 * (1 - sqftDiffPercent / 0.20));
+  if (subject.sqft > 0 && property.sqft > 0) {
+    const sqftDiffPercent = Math.abs(property.sqft - subject.sqft) / subject.sqft;
+    score += Math.max(0, 25 * (1 - sqftDiffPercent / 0.25));
+  }
 
   // Distance (20 points max)
-  score += Math.max(0, 20 * (1 - distanceMiles / 5));
+  if (property.distanceMiles > 0) {
+    score += Math.max(0, 20 * (1 - property.distanceMiles / 5));
+  } else {
+    score += 15;
+  }
 
   // Bedroom match (15 points max)
   const bedDiff = Math.abs(property.bedrooms - subject.bedrooms);
@@ -242,19 +288,10 @@ function calculateSimilarityScore(
   score += bathDiff === 0 ? 10 : bathDiff <= 1 ? 5 : 0;
 
   // Recency (10 points max)
-  const relevantDate = property.leaseDate || property.listDate;
-  if (relevantDate) {
-    const daysSince = Math.floor((Date.now() - new Date(relevantDate).getTime()) / (1000 * 60 * 60 * 24));
+  if (property.listDate) {
+    const daysSince = Math.floor((Date.now() - new Date(property.listDate).getTime()) / (1000 * 60 * 60 * 24));
     score += Math.max(0, 10 * (1 - daysSince / 365));
   }
-
-  // Amenity match (20 points max)
-  if (property.furnished === subject.furnished) score += 4;
-  if (property.petsAllowed === subject.petsAllowed) score += 4;
-  if (property.hasWasherDryer === subject.hasWasherDryer) score += 4;
-  if (property.hasPool === subject.hasPool) score += 3;
-  if (property.parkingSpaces >= subject.parkingSpaces) score += 3;
-  if (property.garageSpaces >= subject.garageSpaces) score += 2;
 
   return Math.round(score);
 }
@@ -273,37 +310,31 @@ export async function POST(request: NextRequest) {
     }
 
     const query = buildDMQL2Query(subject, includeActive);
-    console.log('[API] Rental DMQL2 query:', query);
+    console.log('[API] DMQL2 query:', query);
 
-    const records = await retsSearch({
-      searchType: RENTAL_SEARCH_TYPE,
-      class: RENTAL_CLASS,
+    const records = await retsSearch(
+      RENTAL_SEARCH_TYPE,
+      RENTAL_CLASS,
       query,
-      limit: 200,
-    });
+      SELECT_FIELDS,
+      200,
+    );
 
     const results: RentalCompResult[] = records
       .map(record => mapRETSRecord(record, subject))
       .filter((r): r is RentalCompResult => r !== null)
       .filter(r => {
         if (!subject.lat || !subject.lng) return true;
-        return r.distanceMiles <= 5;
+        return r.distanceMiles <= 10;
       })
       .sort((a, b) => b.similarityScore - a.similarityScore)
       .slice(0, 25);
 
-    console.log(`[API] Returning ${results.length} rental comps`);
-
+    console.log(`[API] Returning ${results.length} comps`);
     return NextResponse.json(results);
   } catch (error) {
-    console.error('[API] Rental comp search error:', error);
-
+    console.error('[API] Search error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    const status = message.includes('credentials') ? 500 : 502;
-
-    return NextResponse.json(
-      { error: `RETS search failed: ${message}` },
-      { status }
-    );
+    return NextResponse.json({ error: `RETS search failed: ${message}` }, { status: 502 });
   }
 }

@@ -10,25 +10,25 @@ interface SubjectPropertyFormProps {
   initialSubject?: SubjectProperty;
 }
 
-export const defaultSubject: SubjectProperty = {
-  address: '500 Main St',
-  city: 'Dunedin',
-  state: 'FL',
-  zip: '34698',
-  bedrooms: 3,
-  bathrooms: 2,
-  sqft: 1700,
-  yearBuilt: 2005,
+export const emptySubject: SubjectProperty = {
+  address: '',
+  city: '',
+  state: '',
+  zip: '',
+  bedrooms: 0,
+  bathrooms: 0,
+  sqft: 0,
+  yearBuilt: 0,
   propertyType: 'Single Family',
-  lat: 28.0197,
-  lng: -82.7718,
+  lat: 0,
+  lng: 0,
   photos: [],
   furnished: false,
-  petsAllowed: true,
-  parkingSpaces: 2,
-  garageSpaces: 1,
+  petsAllowed: false,
+  parkingSpaces: 0,
+  garageSpaces: 0,
   hasPool: false,
-  hasWasherDryer: true,
+  hasWasherDryer: false,
   utilitiesIncluded: false,
 };
 
@@ -43,7 +43,7 @@ const defaultCriteria: SearchCriteria = {
 };
 
 export function SubjectPropertyForm({ onSearch, isSearching = false, initialSubject }: SubjectPropertyFormProps) {
-  const [subject, setSubject] = useState<SubjectProperty>(defaultSubject);
+  const [subject, setSubject] = useState<SubjectProperty>(emptySubject);
   const [criteria, setCriteria] = useState<SearchCriteria>(defaultCriteria);
   const [filtersOpen, setFiltersOpen] = useState(false);
 

@@ -286,7 +286,7 @@ export function AdjustmentGrid({ selectedComps, subject, onAdjustmentsChange }: 
             <div className="text-sm text-walnut dark:text-cream/60">
               Based on {displayedComps.length} adjusted rental comparable{displayedComps.length !== 1 ? 's' : ''}
             </div>
-            <div className="leather-texture rounded-xl px-8 py-5 text-center relative overflow-hidden">
+            <div className="leather-texture rounded-xl px-4 sm:px-8 py-5 text-center relative overflow-hidden">
               <div className="relative z-10">
                 <div className="text-xs font-semibold text-gold-light uppercase tracking-wider mb-1">Indicated Market Rent</div>
                 <div className="font-display text-3xl font-bold text-cream">

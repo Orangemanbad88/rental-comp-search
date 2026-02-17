@@ -33,7 +33,7 @@ export function MapView({ subject, comps, selectedComps, onToggleSelect }: MapVi
           </svg>
           <h2 className="font-display text-xl font-semibold text-charcoal dark:text-cream">Location Map</h2>
         </div>
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex flex-wrap items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 bg-burgundy dark:bg-gold rounded-full shadow"></div>
             <span className="text-walnut dark:text-cream/60">Subject</span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { SubjectPropertyForm, defaultSubject } from '@/components/search/SubjectPropertyForm';
+import { SubjectPropertyForm } from '@/components/search/SubjectPropertyForm';
 
 import { CompResultsTable } from '@/components/property/CompResultsTable';
 import { AdjustmentGrid, CompAdjustments } from '@/components/property/AdjustmentGrid';
@@ -41,7 +41,6 @@ export default function Home() {
     sqftVariancePercent: 20, propertyTypeMatch: true, includeActive: true,
   };
 
-  const hasAutoSearched = useRef(false);
   useEffect(() => {
     fetch('/api/listings')
       .then(res => res.json())
@@ -54,11 +53,7 @@ export default function Home() {
         setIsLoadingListings(false);
       });
 
-    // Auto-search on mount with default subject
-    if (!hasAutoSearched.current) {
-      hasAutoSearched.current = true;
-      handleSearch(defaultSubject, defaultCriteria);
-    }
+    // No auto-search — wait for user to set a subject
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

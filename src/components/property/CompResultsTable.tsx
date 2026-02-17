@@ -53,7 +53,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-const INITIAL_SHOW = 10;
+const INITIAL_SHOW = 5;
 
 export function CompResultsTable({ results, onToggleSelect, onPropertyClick }: CompResultsTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('similarityScore');
@@ -213,7 +213,7 @@ export function CompResultsTable({ results, onToggleSelect, onPropertyClick }: C
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 text-center text-sm border-t border-walnut/10 dark:border-gold/10 pt-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-sm border-t border-walnut/10 dark:border-gold/10 pt-3">
               <div>
                 <div className="text-walnut/60 dark:text-cream/40 text-xs">Bed/Bath</div>
                 <div className="font-medium text-charcoal dark:text-cream">{comp.bedrooms}/{comp.bathrooms}</div>
