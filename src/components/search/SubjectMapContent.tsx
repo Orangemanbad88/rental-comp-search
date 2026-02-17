@@ -165,11 +165,11 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
             <CircleMarker
               key={listing.id}
               center={[listing.lat, listing.lng]}
-              radius={6}
+              radius={10}
               pathOptions={{
                 color: '#10b981',
                 fillColor: '#10b981',
-                fillOpacity: 0.8,
+                fillOpacity: 0.9,
                 weight: 2,
               }}
               eventHandlers={{ click: () => handleListingClick(listing) }}
