@@ -49,24 +49,29 @@ export default function MapContent({ subject, comps, selectedComps, onToggleSele
   }
 
   const { MapContainer, TileLayer, Marker, Popup, CircleMarker } = MapComponents;
-  const subjectLat = subject.lat || 28.0197;
-  const subjectLng = subject.lng || -82.7718;
+  const subjectLat = subject.lat || 39.1534;
+  const subjectLng = subject.lng || -74.6929;
   const selectedIds = new Set(selectedComps.map(c => c.id));
 
+  // Filter out comps with no valid coordinates
+  const mappableComps = comps.filter(c => c.lat !== 0 && c.lng !== 0);
+
   return (
-    <div className="h-64 rounded-xl overflow-hidden border border-slate-200">
-      <MapContainer center={[subjectLat, subjectLng]} zoom={13} className="h-full w-full">
+    <div className="h-80 rounded-xl overflow-hidden border border-walnut/10 dark:border-gold/10">
+      <MapContainer center={[subjectLat, subjectLng]} zoom={12} className="h-full w-full">
         <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <Marker position={[subjectLat, subjectLng]}>
-          <Popup>
-            <div className="text-sm p-1">
-              <div className="font-bold text-blue-600 text-xs uppercase tracking-wide mb-1">Subject Property</div>
-              <div className="font-semibold text-slate-900">{subject.address || 'Subject Property'}</div>
-              <div className="text-slate-500 text-xs mt-1">{subject.bedrooms} bed · {subject.bathrooms} bath · {subject.sqft.toLocaleString()} sqft</div>
-            </div>
-          </Popup>
-        </Marker>
-        {comps.map((comp) => {
+        {subjectLat !== 0 && subjectLng !== 0 && (
+          <Marker position={[subjectLat, subjectLng]}>
+            <Popup>
+              <div className="text-sm p-1">
+                <div className="font-bold text-blue-600 text-xs uppercase tracking-wide mb-1">Subject Property</div>
+                <div className="font-semibold text-slate-900">{subject.address || 'Subject Property'}</div>
+                <div className="text-slate-500 text-xs mt-1">{subject.bedrooms} bed · {subject.bathrooms} bath · {subject.sqft.toLocaleString()} sqft</div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+        {mappableComps.map((comp) => {
           const isSelected = selectedIds.has(comp.id);
           const statusColor = comp.status === 'Leased' ? (isSelected ? '#10b981' : '#6b7280') : (isSelected ? '#3b82f6' : '#94a3b8');
           return (
@@ -79,8 +84,8 @@ export default function MapContent({ subject, comps, selectedComps, onToggleSele
                   <div className="text-slate-500 text-xs">{comp.city}, {comp.state} · {comp.status}</div>
                   <div className="mt-2 pt-2 border-t border-slate-100">
                     <div className="flex justify-between text-xs">
-                      <span className="text-slate-500">Rent</span>
-                      <span className="font-bold text-slate-900">{formatCurrency(comp.rentPrice)}/mo</span>
+                      <span className="text-slate-500">Price</span>
+                      <span className="font-bold text-slate-900">{formatCurrency(comp.rentPrice)}</span>
                     </div>
                     <div className="flex justify-between text-xs mt-1">
                       <span className="text-slate-500">Details</span>

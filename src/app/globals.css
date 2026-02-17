@@ -11,7 +11,7 @@
   --burgundy-dark: #047857;
   --burgundy-light: #10B981;
   --walnut: #475569;
-  --walnut-dark: #1E293B;
+  --walnut-dark: #334155;
   --walnut-light: #64748B;
   --gold: #CA8A04;
   --gold-light: #EAB308;
@@ -111,30 +111,23 @@ h1, h2, h3, .font-display {
 
 /* Clean Header Gradient (replaces leather texture) */
 .leather-texture {
-  background: linear-gradient(145deg, #1E293B 0%, #0F172A 100%);
+  background-image:
+    linear-gradient(145deg, var(--burgundy) 0%, var(--burgundy-dark) 100%);
   position: relative;
 }
 
 .leather-texture::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  pointer-events: none;
+  display: none;
 }
 
 /* Clean Slate Header (replaces wood grain) */
 .wood-grain {
-  background: linear-gradient(135deg, #334155 0%, #1E293B 50%, #334155 100%);
+  background: linear-gradient(135deg, var(--walnut) 0%, var(--walnut-dark) 50%, var(--walnut) 100%);
   position: relative;
 }
 
 .wood-grain::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  pointer-events: none;
+  display: none;
 }
 
 /* Gold Shimmer Effect */

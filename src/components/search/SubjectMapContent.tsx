@@ -15,11 +15,19 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   'Wildwood': { lat: 38.9918, lng: -74.8148 },
   'Wildwood Crest': { lat: 38.9748, lng: -74.8238 },
   'North Wildwood': { lat: 39.0026, lng: -74.7988 },
+  'West Wildwood': { lat: 38.9928, lng: -74.8268 },
   'Ocean City': { lat: 39.2776, lng: -74.5746 },
+  'Ocean View': { lat: 39.1980, lng: -74.7120 },
   'Upper Township': { lat: 39.2048, lng: -74.7238 },
   'Middle Township': { lat: 39.0426, lng: -74.8438 },
   'Lower Township': { lat: 38.9626, lng: -74.8838 },
   'West Cape May': { lat: 38.9398, lng: -74.9380 },
+  'North Cape May': { lat: 38.9780, lng: -74.9420 },
+  'Villas': { lat: 38.9580, lng: -74.9380 },
+  'Erma': { lat: 38.9780, lng: -74.9020 },
+  'Rio Grande': { lat: 39.0126, lng: -74.8768 },
+  'Seaville': { lat: 39.1880, lng: -74.7320 },
+  'Woodbine': { lat: 39.2416, lng: -74.8128 },
 };
 
 function findNearestCity(lat: number, lng: number): string {

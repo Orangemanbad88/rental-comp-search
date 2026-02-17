@@ -13,12 +13,9 @@ import { SubjectDetailModal } from '@/components/property/SubjectDetailModal';
 import { ExportButtons } from '@/components/ui/ExportButtons';
 import { ThemeToggle } from '@/components/ThemeProvider';
 import { SubjectProperty, SearchCriteria, RentalCompResult } from '@/types/property';
-import { getPropertyService } from '@/services/mockPropertyService';
 import { getMLSPropertyService } from '@/services/mlsPropertyService';
 
-const propertyService = process.env.NEXT_PUBLIC_DATA_SOURCE === 'mls'
-  ? getMLSPropertyService()
-  : getPropertyService();
+const propertyService = getMLSPropertyService();
 
 export default function Home() {
   const [results, setResults] = useState<RentalCompResult[]>([]);
@@ -193,14 +190,19 @@ export default function Home() {
       </header>
 
       {/* Main */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Map View — full width at top */}
+        {subject && hasSearched && results.length > 0 && (
+          <MapView subject={subject} comps={results} selectedComps={selectedComps} onToggleSelect={handleToggleSelect} />
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Sidebar - Subject Property Form (on top on mobile) */}
           <div className="order-1 lg:order-none lg:col-span-4 xl:col-span-3">
             <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] flex flex-col">
               <div className="card-premium rounded-xl overflow-hidden flex flex-col lg:min-h-0">
-                {/* Leather Header */}
-                <div className="leather-texture px-6 py-3 flex-shrink-0">
+                {/* Header — matches top nav */}
+                <div className="wood-grain px-6 py-3 flex-shrink-0">
                   <h2 className="font-display text-lg font-semibold text-cream flex items-center gap-3 relative z-10">
                     <svg className="w-5 h-5 text-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -226,12 +228,6 @@ export default function Home() {
 
           {/* Main Content Area */}
           <div className="order-2 lg:order-none lg:col-span-8 xl:col-span-9 space-y-8">
-            {/* Map View — desktop only */}
-            {subject && hasSearched && results.length > 0 && (
-              <div className="hidden lg:block">
-                <MapView subject={subject} comps={results} selectedComps={selectedComps} onToggleSelect={handleToggleSelect} />
-              </div>
-            )}
             {/* Results */}
             <div className="card-premium rounded-xl overflow-hidden">
               <div className="px-6 py-4 border-b border-walnut/10 dark:border-gold/10 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-cream to-ivory dark:from-[#1E293B] dark:to-[#1E293B]">
