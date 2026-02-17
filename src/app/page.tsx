@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { SubjectPropertyForm } from '@/components/search/SubjectPropertyForm';
-
+import { SubjectPropertyForm, emptySubject } from '@/components/search/SubjectPropertyForm';
+import { SubjectMap } from '@/components/search/SubjectMap';
 import { CompResultsTable } from '@/components/property/CompResultsTable';
 import { AdjustmentGrid, CompAdjustments } from '@/components/property/AdjustmentGrid';
 import { PhotoComparison } from '@/components/property/PhotoComparison';
@@ -27,6 +27,7 @@ export default function Home() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingListings, setIsLoadingListings] = useState(true);
+  const [formSubject, setFormSubject] = useState<SubjectProperty>(emptySubject);
   const [subject, setSubject] = useState<SubjectProperty | null>(null);
   const [adjustments, setAdjustments] = useState<CompAdjustments>({});
   const [indicatedRent, setIndicatedRent] = useState<number>(0);
@@ -56,6 +57,14 @@ export default function Home() {
     // No auto-search — wait for user to set a subject
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Map click → update form + auto-search
+  const handleMapLocationSelect = (updates: Partial<SubjectProperty>) => {
+    const updated = { ...formSubject, ...updates };
+    setFormSubject(updated);
+    setInitialSubject(updated);
+    handleSearch(updated, defaultCriteria);
+  };
 
   const filteredListings = allListings.filter(listing => {
     if (!filterText.trim()) return true;
@@ -184,20 +193,14 @@ export default function Home() {
       </header>
 
       {/* Main */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Map View — desktop only, full width at top */}
-        {subject && hasSearched && results.length > 0 && (
-          <div className="hidden lg:block">
-            <MapView subject={subject} comps={results} selectedComps={selectedComps} onToggleSelect={handleToggleSelect} />
-          </div>
-        )}
-
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Sidebar (on top on mobile) */}
+          {/* Sidebar - Subject Property Form (on top on mobile) */}
           <div className="order-1 lg:order-none lg:col-span-4 xl:col-span-3">
-            <div className="lg:sticky lg:top-20 space-y-4">
-              <div className="card-premium rounded-xl overflow-hidden flex flex-col lg:max-h-[calc(100vh-6rem)]">
-                <div className="leather-texture px-6 py-3 shrink-0">
+            <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] flex flex-col">
+              <div className="card-premium rounded-xl overflow-hidden flex flex-col lg:min-h-0">
+                {/* Leather Header */}
+                <div className="leather-texture px-6 py-3 flex-shrink-0">
                   <h2 className="font-display text-lg font-semibold text-cream flex items-center gap-3 relative z-10">
                     <svg className="w-5 h-5 text-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -205,15 +208,30 @@ export default function Home() {
                     Subject Property
                   </h2>
                 </div>
-                <div className="p-6 lg:overflow-y-auto lg:min-h-0 bg-gradient-to-b from-cream to-cream-dark dark:from-[#1E293B] dark:to-[#0F172A]">
+                {/* Map — fixed height, no scroll */}
+                <div className="p-4 pb-2 bg-gradient-to-b from-cream to-cream-dark dark:from-[#1E293B] dark:to-[#0F172A] flex-shrink-0">
+                  <SubjectMap
+                    subject={formSubject}
+                    onLocationSelect={handleMapLocationSelect}
+                    listings={hasSearched ? results : allListings}
+                  />
+                </div>
+                {/* Scrollable form area */}
+                <div className="px-6 pb-6 lg:overflow-y-auto lg:min-h-0 bg-gradient-to-b from-cream-dark to-cream-dark dark:from-[#0F172A] dark:to-[#0F172A]">
                   <SubjectPropertyForm onSearch={handleSearch} isSearching={isSearching} initialSubject={initialSubject ?? undefined} />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Content */}
+          {/* Main Content Area */}
           <div className="order-2 lg:order-none lg:col-span-8 xl:col-span-9 space-y-8">
+            {/* Map View — desktop only */}
+            {subject && hasSearched && results.length > 0 && (
+              <div className="hidden lg:block">
+                <MapView subject={subject} comps={results} selectedComps={selectedComps} onToggleSelect={handleToggleSelect} />
+              </div>
+            )}
             {/* Results */}
             <div className="card-premium rounded-xl overflow-hidden">
               <div className="px-6 py-4 border-b border-walnut/10 dark:border-gold/10 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-cream to-ivory dark:from-[#1E293B] dark:to-[#1E293B]">
