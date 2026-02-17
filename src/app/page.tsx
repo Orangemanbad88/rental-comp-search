@@ -154,7 +154,7 @@ export default function Home() {
   const selectedComps = results.filter(r => r.selected);
 
   return (
-    <div className="min-h-screen bg-cream dark:bg-[#0F172A]">
+    <div className="min-h-screen bg-cream dark:bg-[#0a0a0f]">
       {/* Header */}
       <header className="sticky top-0 z-40 wood-grain border-b border-walnut-dark/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -211,7 +211,7 @@ export default function Home() {
                   </h2>
                 </div>
                 {/* Map — fixed height, no scroll */}
-                <div className="p-4 pb-2 bg-gradient-to-b from-cream to-cream-dark dark:from-[#1E293B] dark:to-[#0F172A] flex-shrink-0">
+                <div className="p-4 pb-2 bg-gradient-to-b from-cream to-cream-dark dark:from-[#111118] dark:to-[#0a0a0f] flex-shrink-0">
                   <SubjectMap
                     subject={formSubject}
                     onLocationSelect={handleMapLocationSelect}
@@ -219,7 +219,7 @@ export default function Home() {
                   />
                 </div>
                 {/* Scrollable form area */}
-                <div className="px-6 pb-6 lg:overflow-y-auto lg:min-h-0 bg-gradient-to-b from-cream-dark to-cream-dark dark:from-[#0F172A] dark:to-[#0F172A]">
+                <div className="px-6 pb-6 lg:overflow-y-auto lg:min-h-0 bg-gradient-to-b from-cream-dark to-cream-dark dark:from-[#0a0a0f] dark:to-[#0a0a0f]">
                   <SubjectPropertyForm onSearch={handleSearch} isSearching={isSearching} initialSubject={initialSubject ?? undefined} />
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function Home() {
           <div className="order-2 lg:order-none lg:col-span-8 xl:col-span-9 space-y-8">
             {/* Results */}
             <div className="card-premium rounded-xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-walnut/10 dark:border-gold/10 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-cream to-ivory dark:from-[#1E293B] dark:to-[#1E293B]">
+              <div className="px-6 py-4 border-b border-walnut/10 dark:border-gold/10 flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-cream to-ivory dark:from-[#111118] dark:to-[#1a1a24]">
                 <h2 className="font-display text-xl font-semibold text-charcoal dark:text-cream flex items-center gap-3 shrink-0">
                   <svg className="w-5 h-5 text-burgundy dark:text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -249,7 +249,7 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              <div className="p-6 bg-gradient-to-b from-ivory to-cream dark:from-[#1E293B] dark:to-[#1E293B]">
+              <div className="p-6 bg-gradient-to-b from-ivory to-cream dark:from-[#111118] dark:to-[#1a1a24]">
                 {!hasSearched && isLoadingListings ? (
                   <div className="text-center py-16">
                     <div className="inline-flex items-center justify-center w-20 h-20 mb-6">

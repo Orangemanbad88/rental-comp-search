@@ -83,7 +83,7 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
 
   if (!mounted || !MapComps) {
     return (
-      <div className="h-52 bg-cream-dark dark:bg-[#1E293B] rounded-lg flex items-center justify-center">
+      <div className="h-52 bg-cream-dark dark:bg-[#111118] rounded-lg flex items-center justify-center">
         <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-walnut/20 dark:border-gold/20 border-t-burgundy dark:border-t-gold"></div>
       </div>
     );
@@ -202,7 +202,7 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
       </div>
 
       {loading && (
-        <div className="absolute inset-0 bg-cream/50 dark:bg-[#0F172A]/50 rounded-lg flex items-center justify-center backdrop-blur-sm">
+        <div className="absolute inset-0 bg-cream/50 dark:bg-[#0a0a0f]/50 rounded-lg flex items-center justify-center backdrop-blur-sm">
           <div className="flex items-center gap-2 text-sm text-walnut dark:text-cream/70">
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-walnut/20 dark:border-gold/20 border-t-burgundy dark:border-t-gold"></div>
             Locating...
