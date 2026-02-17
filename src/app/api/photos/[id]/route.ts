@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { retsGetObject } from '@/lib/rets-client';
+import { retsGetObject, hasRetsConfig } from '@/lib/rets-client';
 
 const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
   <rect width="400" height="300" fill="#e2e8f0"/>
@@ -17,6 +17,16 @@ export async function GET(
 ) {
   const { id } = await params;
   const idx = parseInt(request.nextUrl.searchParams.get('idx') || '0', 10);
+
+  if (!hasRetsConfig()) {
+    return new NextResponse(PLACEHOLDER_SVG, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
+  }
 
   const result = await retsGetObject(id, idx);
 

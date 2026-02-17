@@ -4,24 +4,26 @@ import { useEffect, useState } from 'react';
 import { SubjectProperty, RentalCompResult } from '@/types/property';
 import { formatCurrency } from '@/lib/utils';
 
-// Florida / Dunedin area city coordinates
+// Cape May County, NJ city coordinates
 const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
-  'Dunedin': { lat: 28.0197, lng: -82.7718 },
-  'Clearwater': { lat: 27.9659, lng: -82.8001 },
-  'Palm Harbor': { lat: 28.0781, lng: -82.7637 },
-  'Safety Harbor': { lat: 27.9917, lng: -82.6929 },
-  'Oldsmar': { lat: 28.0342, lng: -82.6651 },
-  'Tarpon Springs': { lat: 28.1461, lng: -82.7568 },
-  'Largo': { lat: 27.9095, lng: -82.7873 },
-  'Pinellas Park': { lat: 27.8428, lng: -82.6993 },
-  'St Petersburg': { lat: 27.7676, lng: -82.6403 },
-  'Tampa': { lat: 27.9506, lng: -82.4572 },
-  'Seminole': { lat: 27.8397, lng: -82.7912 },
-  'Indian Rocks Beach': { lat: 27.8836, lng: -82.8526 },
+  'Cape May': { lat: 38.9351, lng: -74.9060 },
+  'Sea Isle City': { lat: 39.1534, lng: -74.6929 },
+  'Avalon': { lat: 39.1012, lng: -74.7177 },
+  'Stone Harbor': { lat: 39.0526, lng: -74.7608 },
+  'Cape May Court House': { lat: 39.0826, lng: -74.8238 },
+  'Cape May Point': { lat: 38.9376, lng: -74.9658 },
+  'Wildwood': { lat: 38.9918, lng: -74.8148 },
+  'Wildwood Crest': { lat: 38.9748, lng: -74.8238 },
+  'North Wildwood': { lat: 39.0026, lng: -74.7988 },
+  'Ocean City': { lat: 39.2776, lng: -74.5746 },
+  'Upper Township': { lat: 39.2048, lng: -74.7238 },
+  'Middle Township': { lat: 39.0426, lng: -74.8438 },
+  'Lower Township': { lat: 38.9626, lng: -74.8838 },
+  'West Cape May': { lat: 38.9398, lng: -74.9380 },
 };
 
 function findNearestCity(lat: number, lng: number): string {
-  let nearest = 'Dunedin';
+  let nearest = 'Cape May';
   let minDist = Infinity;
   for (const [city, coords] of Object.entries(CITY_COORDS)) {
     const d = Math.sqrt((lat - coords.lat) ** 2 + (lng - coords.lng) ** 2);
@@ -81,8 +83,8 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
 
   const { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMapEvents } = MapComps;
 
-  const centerLat = subject?.lat || 28.0197;
-  const centerLng = subject?.lng || -82.7718;
+  const centerLat = subject?.lat || 38.9351;
+  const centerLng = subject?.lng || -74.9060;
 
   const mappableListings = listings.filter(l => l.lat !== 0 && l.lng !== 0);
 
@@ -146,7 +148,7 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
   return (
     <div className="relative">
       <div className="h-52 rounded-lg overflow-hidden border border-walnut/10 dark:border-gold/10">
-        <MapContainer center={[centerLat, centerLng]} zoom={12} className="h-full w-full">
+        <MapContainer center={[centerLat, centerLng]} zoom={11} className="h-full w-full">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

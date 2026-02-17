@@ -32,6 +32,28 @@ export const emptySubject: SubjectProperty = {
   utilitiesIncluded: false,
 };
 
+export const defaultSubject: SubjectProperty = {
+  address: '200 Beach Ave',
+  city: 'Cape May',
+  state: 'NJ',
+  zip: '08204',
+  bedrooms: 3,
+  bathrooms: 2,
+  sqft: 1700,
+  yearBuilt: 2000,
+  propertyType: 'Single Family',
+  lat: 38.9351,
+  lng: -74.9060,
+  photos: [],
+  furnished: false,
+  petsAllowed: true,
+  parkingSpaces: 2,
+  garageSpaces: 1,
+  hasPool: false,
+  hasWasherDryer: true,
+  utilitiesIncluded: false,
+};
+
 const defaultCriteria: SearchCriteria = {
   radiusMiles: 5,
   dateRangeMonths: 12,
@@ -87,7 +109,7 @@ export function SubjectPropertyForm({ onSearch, isSearching = false, initialSubj
               className={inputClass}
               value={subject.city}
               onChange={(e) => setSubject({ ...subject, city: e.target.value })}
-              placeholder="Dunedin"
+              placeholder="Cape May"
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -98,7 +120,7 @@ export function SubjectPropertyForm({ onSearch, isSearching = false, initialSubj
                 className={inputClass}
                 value={subject.state}
                 onChange={(e) => setSubject({ ...subject, state: e.target.value })}
-                placeholder="FL"
+                placeholder="NJ"
                 maxLength={2}
               />
             </div>
@@ -109,7 +131,7 @@ export function SubjectPropertyForm({ onSearch, isSearching = false, initialSubj
                 className={inputClass}
                 value={subject.zip}
                 onChange={(e) => setSubject({ ...subject, zip: e.target.value })}
-                placeholder="34698"
+                placeholder="08204"
                 maxLength={5}
               />
             </div>
