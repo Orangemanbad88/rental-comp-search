@@ -83,8 +83,8 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
 
   const { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMapEvents } = MapComps;
 
-  const centerLat = subject?.lat || 38.9351;
-  const centerLng = subject?.lng || -74.9060;
+  const centerLat = subject?.lat || 39.1534;
+  const centerLng = subject?.lng || -74.6929;
 
   const mappableListings = listings.filter(l => l.lat !== 0 && l.lng !== 0);
 
@@ -148,7 +148,7 @@ export default function SubjectMapContent({ subject, onLocationSelect, listings 
   return (
     <div className="relative">
       <div className="h-52 rounded-lg overflow-hidden border border-walnut/10 dark:border-gold/10">
-        <MapContainer center={[centerLat, centerLng]} zoom={11} className="h-full w-full">
+        <MapContainer center={[centerLat, centerLng]} zoom={12} className="h-full w-full">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
