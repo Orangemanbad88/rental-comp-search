@@ -67,6 +67,7 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
 };
 
 export async function GET() {
+  try {
   const cutoff = new Date();
   cutoff.setMonth(cutoff.getMonth() - 6);
   const cutoffStr = cutoff.toISOString().split('T')[0];
@@ -139,4 +140,9 @@ export async function GET() {
 
   console.log(`[Listings] Returning ${listings.length} MLS listings`);
   return NextResponse.json(listings);
+  } catch (error) {
+    console.error('[Listings] Error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: `Listings failed: ${message}` }, { status: 502 });
+  }
 }
