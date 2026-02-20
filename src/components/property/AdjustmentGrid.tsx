@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { RentalCompResult, SubjectProperty } from '@/types/property';
 import { formatCurrency, cn } from '@/lib/utils';
+import { getActiveAdjustmentValues } from '@/lib/storage';
+import { RentalAdjustmentValues } from '@/types/settings';
 
 interface Adjustment {
   bedroom: number;
@@ -29,19 +31,16 @@ interface AdjustmentGridProps {
 
 export type { CompAdjustments, Adjustment };
 
-// Monthly rent adjustment values
-const BEDROOM_VALUE = 150;     // $150/mo per bedroom
-const BATHROOM_VALUE = 75;     // $75/mo per bathroom
-const SQFT_VALUE = 0.50;       // $0.50/sqft/mo
-const FURNISHED_VALUE = 200;   // $200/mo for furnished
-const PARKING_VALUE = 75;      // $75/mo per parking space
-const POOL_VALUE = 100;        // $100/mo for pool
-const WASHER_DRYER_VALUE = 75; // $75/mo for W/D
-const PETS_VALUE = 50;         // $50/mo for pet-friendly
-
 export function AdjustmentGrid({ selectedComps, subject, onAdjustmentsChange }: AdjustmentGridProps) {
   const [adjustments, setAdjustments] = useState<CompAdjustments>({});
   const [otherInputs, setOtherInputs] = useState<{ [compId: string]: string }>({});
+  const [adjValues, setAdjValues] = useState<RentalAdjustmentValues>({
+    bedroom: 150, bathroom: 75, sqft: 0.50, furnished: 200, parking: 75, pool: 100, washerDryer: 75, pets: 50,
+  });
+
+  useEffect(() => {
+    setAdjValues(getActiveAdjustmentValues());
+  }, []);
 
   useEffect(() => {
     setAdjustments((prev) => {
@@ -57,21 +56,21 @@ export function AdjustmentGrid({ selectedComps, subject, onAdjustmentsChange }: 
         const petsDiff = (subject.petsAllowed ? 1 : 0) - (comp.petsAllowed ? 1 : 0);
 
         newAdj[comp.id] = {
-          bedroom: bedDiff * BEDROOM_VALUE,
-          bathroom: bathDiff * BATHROOM_VALUE,
-          sqft: Math.round(sqftDiff * SQFT_VALUE),
+          bedroom: bedDiff * adjValues.bedroom,
+          bathroom: bathDiff * adjValues.bathroom,
+          sqft: Math.round(sqftDiff * adjValues.sqft),
           condition: 0,
-          furnished: furnishedDiff * FURNISHED_VALUE,
-          parking: parkingDiff * PARKING_VALUE,
-          pool: poolDiff * POOL_VALUE,
-          washerDryer: wdDiff * WASHER_DRYER_VALUE,
-          pets: petsDiff * PETS_VALUE,
+          furnished: furnishedDiff * adjValues.furnished,
+          parking: parkingDiff * adjValues.parking,
+          pool: poolDiff * adjValues.pool,
+          washerDryer: wdDiff * adjValues.washerDryer,
+          pets: petsDiff * adjValues.pets,
           other: prev[comp.id]?.other || 0,
         };
       });
       return newAdj;
     });
-  }, [selectedComps, subject]);
+  }, [selectedComps, subject, adjValues]);
 
   const handleOtherChange = (compId: string, value: string) => {
     setOtherInputs({ ...otherInputs, [compId]: value });
@@ -154,13 +153,13 @@ export function AdjustmentGrid({ selectedComps, subject, onAdjustmentsChange }: 
                 <th className="text-left py-3 px-2 text-xs font-semibold text-walnut dark:text-gold-light/70 uppercase tracking-wider">Property</th>
                 <th className="text-right py-3 px-2 text-xs font-semibold text-walnut dark:text-gold-light/70 uppercase tracking-wider">Rent</th>
                 <th className="text-right py-3 px-2 text-xs font-semibold text-walnut dark:text-gold-light/70 uppercase tracking-wider">
-                  <div>Bed</div><div className="font-normal normal-case text-walnut/50 dark:text-cream/30">$150/mo</div>
+                  <div>Bed</div><div className="font-normal normal-case text-walnut/50 dark:text-cream/30">${adjValues.bedroom}/mo</div>
                 </th>
                 <th className="text-right py-3 px-2 text-xs font-semibold text-walnut dark:text-gold-light/70 uppercase tracking-wider">
-                  <div>Bath</div><div className="font-normal normal-case text-walnut/50 dark:text-cream/30">$75/mo</div>
+                  <div>Bath</div><div className="font-normal normal-case text-walnut/50 dark:text-cream/30">${adjValues.bathroom}/mo</div>
                 </th>
                 <th className="text-right py-3 px-2 text-xs font-semibold text-walnut dark:text-gold-light/70 uppercase tracking-wider">
-                  <div>Sq Ft</div><div className="font-normal normal-case text-walnut/50 dark:text-cream/30">$0.50/sf</div>
+                  <div>Sq Ft</div><div className="font-normal normal-case text-walnut/50 dark:text-cream/30">${adjValues.sqft}/sf</div>
                 </th>
                 <th className="text-right py-3 px-2 text-xs font-semibold text-walnut dark:text-gold-light/70 uppercase tracking-wider">Amenities</th>
                 <th className="text-right py-3 px-2 text-xs font-semibold text-walnut dark:text-gold-light/70 uppercase tracking-wider">Other</th>

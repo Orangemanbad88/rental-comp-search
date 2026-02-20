@@ -11,7 +11,7 @@ import { MapView } from '@/components/property/MapView';
 import { PropertyDetailModal } from '@/components/property/PropertyDetailModal';
 import { SubjectDetailModal } from '@/components/property/SubjectDetailModal';
 import { ExportButtons } from '@/components/ui/ExportButtons';
-import { ThemeToggle } from '@/components/ThemeProvider';
+import { Header } from '@/components/layout/Header';
 import { SubjectProperty, SearchCriteria, RentalCompResult } from '@/types/property';
 import { getMLSPropertyService } from '@/services/mlsPropertyService';
 
@@ -155,39 +155,19 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-cream dark:bg-[#0a0a0f]">
-      {/* Header */}
-      <header className="sticky top-0 z-40 wood-grain border-b border-walnut-dark/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gold to-gold-muted flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-walnut-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="font-display text-xl font-semibold text-cream tracking-wide">RentAtlas</h1>
-                <p className="text-xs text-gold-light/80 hidden sm:block tracking-wider uppercase">Rental Comparable Intelligence</p>
-              </div>
+      <Header>
+        {subject && selectedComps.length > 0 && (
+          <>
+            <div className="text-right mr-2 px-4 py-1.5 rounded-lg bg-walnut-dark/50 border border-gold/20">
+              <p className="hidden sm:block text-[10px] text-gold-light/70 uppercase tracking-wider">Market Rent</p>
+              <p className="text-sm sm:text-lg font-display font-semibold text-gold-light">
+                ${indicatedRent.toLocaleString()}<span className="text-xs font-normal text-gold-light/50">/mo</span>
+              </p>
             </div>
-
-            <div className="flex items-center gap-4">
-              {subject && selectedComps.length > 0 && (
-                <>
-                  <div className="text-right mr-2 px-4 py-1.5 rounded-lg bg-walnut-dark/50 border border-gold/20">
-                    <p className="hidden sm:block text-[10px] text-gold-light/70 uppercase tracking-wider">Market Rent</p>
-                    <p className="text-sm sm:text-lg font-display font-semibold text-gold-light">
-                      ${indicatedRent.toLocaleString()}<span className="text-xs font-normal text-gold-light/50">/mo</span>
-                    </p>
-                  </div>
-                  <ExportButtons subject={subject} comps={selectedComps} adjustments={adjustments} indicatedRent={indicatedRent} />
-                </>
-              )}
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+            <ExportButtons subject={subject} comps={selectedComps} adjustments={adjustments} indicatedRent={indicatedRent} />
+          </>
+        )}
+      </Header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
