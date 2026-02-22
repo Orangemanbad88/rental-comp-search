@@ -31,7 +31,26 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   'West Wildwood': { lat: 38.9928, lng: -74.8268 },
 };
 
-function normalizeAddr(s: string): string {
+/** Parse a user input like "200 Beach Ave, Cape May, NJ" into street / city / state */
+function parseAddressInput(raw: string): { street: string; city: string; state: string } {
+  const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+  const street = parts[0] || '';
+  let city = '';
+  let state = '';
+  if (parts.length >= 3) {
+    city = parts[1];
+    state = parts[2];
+  } else if (parts.length === 2) {
+    if (/^[A-Za-z]{2}$/.test(parts[1])) {
+      state = parts[1];
+    } else {
+      city = parts[1];
+    }
+  }
+  return { street, city, state };
+}
+
+function normalizeForMatch(s: string): string {
   return s.toLowerCase().trim()
     .replace(/\bstreet\b/g, 'st')
     .replace(/\bavenue\b/g, 'ave')
@@ -41,8 +60,34 @@ function normalizeAddr(s: string): string {
     .replace(/\blane\b/g, 'ln')
     .replace(/\bcourt\b/g, 'ct')
     .replace(/\bplace\b/g, 'pl')
+    .replace(/\bcircle\b/g, 'cir')
+    .replace(/\bterrace\b/g, 'ter')
+    .replace(/\bparkway\b/g, 'pkwy')
+    .replace(/\bhighway\b/g, 'hwy')
+    .replace(/\bnorth\b/g, 'n')
+    .replace(/\bsouth\b/g, 's')
+    .replace(/\beast\b/g, 'e')
+    .replace(/\bwest\b/g, 'w')
     .replace(/[.,#]/g, '')
     .replace(/\s+/g, ' ');
+}
+
+function getHouseNumber(addr: string): string {
+  const m = addr.match(/^(\d+)/);
+  return m ? m[1] : '';
+}
+
+function getStreetWords(addr: string): string[] {
+  return normalizeForMatch(addr).replace(/^\d+\s*/, '').split(/\s+/).filter(Boolean);
+}
+
+function addressMatches(input: string, listing: string): boolean {
+  const inputNum = getHouseNumber(input);
+  const listingNum = getHouseNumber(listing);
+  if (!inputNum || inputNum !== listingNum) return false;
+  const inputWords = getStreetWords(input);
+  const listingWords = getStreetWords(listing);
+  return inputWords.some(w => listingWords.includes(w));
 }
 
 function findNearestCity(lat: number, lng: number): string {
@@ -125,23 +170,17 @@ export function SubjectPropertyForm({ onSearch, isSearching = false, initialSubj
     e.preventDefault();
     let searchSubject = { ...subject };
 
-    // Parse address — might contain "street, city"
-    let searchStreet = subject.address.trim();
-    let searchCity = subject.city;
-    if (searchStreet.includes(',')) {
-      const parts = searchStreet.split(',').map(s => s.trim());
-      searchStreet = parts[0];
-      if (!searchCity && parts[1]) searchCity = parts[1];
-    }
+    // Parse full input — handles "200 Beach Ave, Cape May, NJ"
+    const parsed = parseAddressInput(subject.address);
+    const searchStreet = parsed.street;
+    const searchCity = subject.city || parsed.city;
 
-    // Try to find matching listing by address
+    // Try to find matching listing by house number + street words
     if (searchStreet && listings.length > 0) {
-      const normalized = normalizeAddr(searchStreet);
       const match = listings.find(l => {
-        const listingAddr = normalizeAddr(l.address);
-        const streetMatch = listingAddr === normalized || listingAddr.includes(normalized) || normalized.includes(listingAddr);
-        if (!searchCity) return streetMatch;
-        return streetMatch && l.city.toLowerCase().includes(searchCity.toLowerCase());
+        if (!addressMatches(searchStreet, l.address)) return false;
+        if (!searchCity) return true;
+        return l.city.toLowerCase().includes(searchCity.toLowerCase());
       });
 
       if (match) {
