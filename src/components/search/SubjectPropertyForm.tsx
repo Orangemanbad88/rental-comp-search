@@ -262,6 +262,23 @@ export function SubjectPropertyForm({ onSearch, isSearching = false, initialSubj
         />
       </div>
 
+      {/* Exact match toggle — always visible */}
+      <label className="flex items-center gap-3 cursor-pointer group">
+        <input
+          type="checkbox"
+          className="w-4 h-4 text-burgundy dark:text-gold bg-ivory dark:bg-charcoal border-walnut/30 dark:border-gold/30 rounded focus:ring-burgundy dark:focus:ring-gold focus:ring-2 transition-colors"
+          checked={criteria.bedVariance === 0 && criteria.bathVariance === 0}
+          onChange={(e) => setCriteria({
+            ...criteria,
+            bedVariance: e.target.checked ? 0 : 1,
+            bathVariance: e.target.checked ? 0 : 1,
+          })}
+        />
+        <span className="text-sm text-walnut dark:text-cream/70 group-hover:text-charcoal dark:group-hover:text-cream transition-colors">
+          Exact bed/bath match
+        </span>
+      </label>
+
       {/* Property Details — collapsible, closed by default */}
       <div className={sectionClass}>
         <button

@@ -69,10 +69,17 @@ export default function Home() {
     return listing.address.toLowerCase().includes(q) || listing.city.toLowerCase().includes(q) || listing.zip.toLowerCase().includes(q);
   });
 
-  const handleSearch = async (subjectProperty: SubjectProperty, _criteria: SearchCriteria) => {
+  const handleSearch = async (subjectProperty: SubjectProperty, criteria: SearchCriteria) => {
     setIsSearching(true);
     try {
-      const comps = await propertyService.searchComps(subjectProperty);
+      let comps = await propertyService.searchComps(subjectProperty);
+      // Apply exact bed/bath filter if specified
+      if (criteria.bedVariance === 0 && subjectProperty.bedrooms > 0) {
+        comps = comps.filter(r => r.bedrooms === subjectProperty.bedrooms);
+      }
+      if (criteria.bathVariance === 0 && subjectProperty.bathrooms > 0) {
+        comps = comps.filter(r => r.bathrooms === subjectProperty.bathrooms);
+      }
       setResults(comps);
       setSubject(subjectProperty);
       setInitialSubject(subjectProperty);

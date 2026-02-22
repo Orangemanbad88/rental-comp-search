@@ -111,8 +111,8 @@ function PhotoPanel({
       )}
 
       <div className="p-4 bg-ivory dark:bg-[#1E293B]">
-        <h4 className="font-semibold text-charcoal dark:text-cream text-sm truncate">{title}</h4>
-        <p className="text-xs text-walnut/60 dark:text-cream/40 mt-0.5">{details}</p>
+        <h4 className="font-bold text-charcoal dark:text-white text-sm truncate">{title}</h4>
+        <p className="text-xs text-walnut dark:text-cream/70 mt-0.5">{details}</p>
         {price && <p className="text-sm font-bold text-burgundy dark:text-gold mt-1.5">{price}</p>}
       </div>
     </div>
