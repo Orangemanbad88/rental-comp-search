@@ -26,13 +26,13 @@ export function PropertyDetailModal({ property, subject, isOpen, onClose, onTogg
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/70 backdrop-blur-sm" onClick={handleBackdropClick}>
       <div className="bg-cream dark:bg-[#0F172A] rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-walnut/10 dark:border-gold/20">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-walnut/10 dark:border-gold/10 bg-gradient-to-r from-cream to-ivory dark:from-[#1E293B] dark:to-[#1E293B]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-walnut-dark/50 wood-grain">
           <div>
-            <h2 className="font-display text-xl font-bold text-charcoal dark:text-cream">{property.address}</h2>
-            <p className="text-sm text-walnut/60 dark:text-cream/40">{property.city}, {property.state} {property.zip}</p>
+            <h2 className="font-display text-xl font-bold text-cream">{property.address}</h2>
+            <p className="text-sm text-cream/50">{property.city}, {property.state} {property.zip}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-walnut/10 dark:hover:bg-gold/10 transition-colors">
-            <svg className="w-6 h-6 text-walnut dark:text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-walnut-dark/50 transition-colors">
+            <svg className="w-6 h-6 text-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

@@ -38,26 +38,26 @@ export function ListingsMapView({ listings, onListingClick }: ListingsMapViewPro
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setExpanded(false)} />
           <div className="relative w-full max-w-6xl h-[80vh] card-premium rounded-xl overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-walnut/10 dark:border-gold/10 flex items-center justify-between bg-gradient-to-r from-cream to-ivory dark:from-[#1E293B] dark:to-[#1E293B]">
+            <div className="wood-grain px-6 py-4 border-b border-walnut-dark/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-burgundy dark:text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
-                <h2 className="font-display text-xl font-semibold text-charcoal dark:text-cream">Listings Map</h2>
+                <h2 className="font-display text-xl font-semibold text-cream">Listings Map</h2>
               </div>
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 bg-teal-400 rounded-full border border-teal-600"></div>
-                  <span className="text-walnut dark:text-cream/60">Active</span>
+                  <span className="text-cream/70">Active</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 bg-slate-300 rounded-full border border-slate-400"></div>
-                  <span className="text-walnut dark:text-cream/60">Leased</span>
+                  <span className="text-cream/70">Leased</span>
                 </div>
-                <span className="text-walnut/50 dark:text-cream/40">Click marker to use as subject</span>
+                <span className="text-cream/50">Click marker to use as subject</span>
                 <button
                   onClick={() => setExpanded(false)}
-                  className="ml-2 p-1.5 rounded-lg hover:bg-walnut/10 dark:hover:bg-gold/10 transition-colors text-walnut dark:text-cream/60"
+                  className="ml-2 p-1.5 rounded-lg hover:bg-walnut-dark/50 transition-colors text-cream/70"
                   title="Close"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -85,16 +85,16 @@ function CompactCard({ onExpand, listings, onListingClick }: {
 }) {
   return (
     <div className="card-premium rounded-xl overflow-hidden">
-      <div className="px-4 py-3 border-b border-walnut/10 dark:border-gold/10 flex items-center justify-between bg-gradient-to-r from-cream to-ivory dark:from-[#1E293B] dark:to-[#1E293B]">
+      <div className="wood-grain px-4 py-3 border-b border-walnut-dark/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-burgundy dark:text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 text-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
-          <h2 className="font-display text-sm font-semibold text-charcoal dark:text-cream">Listings Map</h2>
+          <h2 className="font-display text-sm font-semibold text-cream">Listings Map</h2>
         </div>
         <button
           onClick={onExpand}
-          className="p-1.5 rounded-lg hover:bg-walnut/10 dark:hover:bg-gold/10 transition-colors text-walnut dark:text-cream/60"
+          className="p-1.5 rounded-lg hover:bg-walnut-dark/50 transition-colors text-cream/70"
           title="Enlarge map"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -25,26 +25,26 @@ const MapContent = dynamic(() => import('./MapContent'), {
 export function MapView({ subject, comps, selectedComps, onToggleSelect }: MapViewProps) {
   return (
     <div className="card-premium rounded-xl overflow-hidden">
-      <div className="px-6 py-4 border-b border-walnut/10 dark:border-gold/10 flex items-center justify-between bg-gradient-to-r from-cream to-ivory dark:from-[#1E293B] dark:to-[#1E293B]">
+      <div className="wood-grain px-6 py-4 border-b border-walnut-dark/50 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <svg className="w-5 h-5 text-burgundy dark:text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <h2 className="font-display text-xl font-semibold text-charcoal dark:text-cream">Location Map</h2>
+          <h2 className="font-display text-xl font-semibold text-cream">Location Map</h2>
         </div>
         <div className="flex flex-wrap items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 bg-burgundy dark:bg-gold rounded-full shadow"></div>
-            <span className="text-walnut dark:text-cream/60">Subject</span>
+            <span className="text-cream/70">Subject</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
-            <span className="text-walnut dark:text-cream/60">Selected</span>
+            <span className="text-cream/70">Selected</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-            <span className="text-walnut dark:text-cream/60">Active</span>
+            <span className="text-cream/70">Active</span>
           </div>
         </div>
       </div>

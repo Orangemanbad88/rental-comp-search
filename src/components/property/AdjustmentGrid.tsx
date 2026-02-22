@@ -125,15 +125,15 @@ export function AdjustmentGrid({ selectedComps, subject, onAdjustmentsChange }: 
 
   return (
     <div className="card-premium rounded-xl overflow-hidden">
-      <div className="px-6 py-4 border-b border-walnut/10 dark:border-gold/10 bg-gradient-to-r from-cream to-ivory dark:from-[#1E293B] dark:to-[#1E293B]">
+      <div className="wood-grain px-6 py-4 border-b border-walnut-dark/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <svg className="w-5 h-5 text-burgundy dark:text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
             <div>
-              <h2 className="font-display text-xl font-semibold text-charcoal dark:text-cream">Rent Adjustments</h2>
-              <p className="text-xs text-walnut/60 dark:text-cream/40">Adjust comparable rents to match subject property</p>
+              <h2 className="font-display text-xl font-semibold text-cream">Rent Adjustments</h2>
+              <p className="text-xs text-cream/50">Adjust comparable rents to match subject property</p>
             </div>
           </div>
           {hasMore && (
