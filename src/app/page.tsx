@@ -174,7 +174,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Sidebar - Subject Property Form (on top on mobile) */}
           <div className="order-1 lg:order-none lg:col-span-4 xl:col-span-3 lg:self-start">
-            <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] flex flex-col">
+            <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] flex flex-col">
               <div className="card-premium rounded-xl overflow-hidden flex flex-col lg:min-h-0">
                 {/* Header — matches top nav */}
                 <div className="wood-grain px-6 py-3 flex-shrink-0">
@@ -195,7 +195,7 @@ export default function Home() {
                 </div>
                 {/* Scrollable form area */}
                 <div className="px-6 pb-6 lg:overflow-y-auto lg:min-h-0 bg-gradient-to-b from-cream-dark to-cream-dark dark:from-[#0a0a0f] dark:to-[#0a0a0f]">
-                  <SubjectPropertyForm onSearch={handleSearch} isSearching={isSearching} initialSubject={initialSubject ?? undefined} />
+                  <SubjectPropertyForm onSearch={handleSearch} isSearching={isSearching} initialSubject={initialSubject ?? undefined} listings={allListings} />
                 </div>
               </div>
             </div>

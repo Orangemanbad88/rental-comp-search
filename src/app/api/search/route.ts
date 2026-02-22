@@ -318,12 +318,8 @@ export async function POST(request: NextRequest) {
     const subject: SubjectProperty = body.subject || body;
     const includeActive: boolean = body.includeActive ?? true;
 
-    if (!subject.city || !subject.bedrooms || !subject.sqft) {
-      return NextResponse.json(
-        { error: 'Missing required fields: city, bedrooms, sqft' },
-        { status: 400 }
-      );
-    }
+    // City, bedrooms, sqft are optional — query builder skips filters for zero values
+    // This allows address-only searches where details aren't filled in
 
     const query = buildDMQL2Query(subject, includeActive);
 
