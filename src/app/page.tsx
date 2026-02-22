@@ -73,6 +73,8 @@ export default function Home() {
     setIsSearching(true);
     try {
       let comps = await propertyService.searchComps(subjectProperty);
+      // Filter out bad MLS data (0 sqft entries)
+      comps = comps.filter(r => r.sqft > 0);
       // Apply exact bed/bath filter if specified
       if (criteria.bedVariance === 0 && subjectProperty.bedrooms > 0) {
         comps = comps.filter(r => r.bedrooms === subjectProperty.bedrooms);
